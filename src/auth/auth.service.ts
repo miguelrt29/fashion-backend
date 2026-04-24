@@ -64,24 +64,35 @@ export class AuthService {
   }
 
   async forgotPassword(email: string) {
+    console.log('=== forgotPassword iniciado ===');
     const user = await this.userRepository.findOne({ where: { email } });
+    console.log('Usuario encontrado:', user ? user.email : 'NO ENCONTRADO');
+    
     if (!user) {
       return { message: 'Si el email existe, recibirás un enlace para recuperar tu contraseña' };
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenExpiry = new Date(Date.now() + 3600000);
+    console.log('Token generado:', resetToken);
 
     await this.userRepository.update(user.id, {
       resetToken,
       resetTokenExpiry,
     });
+    console.log('Token guardado en BD');
 
-    this.mailService.sendPasswordResetEmail({
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-    }, resetToken).catch(err => console.error('Error sending reset email:', err.message));
+    console.log('Enviando email de recuperación...');
+    try {
+      await this.mailService.sendPasswordResetEmail({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+      }, resetToken);
+      console.log('Email de recuperación ENVIADO');
+    } catch (err) {
+      console.error('Error enviando reset email:', err.message);
+    }
 
     return { message: 'Si el email existe, recibirás un enlace para recuperar tu contraseña' };
   }

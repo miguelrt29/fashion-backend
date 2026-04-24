@@ -12,6 +12,9 @@ import { MailService } from './mail.service';
           host: configService.get('MAIL_HOST') || 'smtp.gmail.com',
           port: parseInt(configService.get('MAIL_PORT') || '587'),
           secure: false,
+          tls: {
+            rejectUnauthorized: false,
+          },
           auth: {
             user: configService.get('MAIL_USER'),
             pass: configService.get('MAIL_PASS'),

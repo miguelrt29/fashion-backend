@@ -1,42 +1,28 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { AiService } from './ai.service';
-import { IsString } from 'class-validator';
-
-class ChatDto {
-  @IsString()
-  message: string;
-}
-
-class RecommendDto {
-  @IsString()
-  description: string;
-
-  products: any[];
-}
-
-class SearchDto {
-  @IsString()
-  query: string;
-
-  products: any[];
-}
+import { GetRecommendationsDto, RecommendationsResponseDto } from './dto/recommendations.dto';
+import { ChatDto, ChatResponseDto } from './dto/chat.dto';
+import { VisualSearchDto, VisualSearchResponseDto } from './dto/visual-search.dto';
 
 @Controller('ai')
 export class AiController {
   constructor(private readonly aiService: AiService) {}
 
+  @Post('recommendations')
+  @HttpCode(HttpStatus.OK)
+  async getRecommendations(@Body() dto: GetRecommendationsDto): Promise<RecommendationsResponseDto> {
+    return this.aiService.getRecommendations(dto.viewedProductIds);
+  }
+
   @Post('chat')
-  chat(@Body() dto: ChatDto) {
-    return this.aiService.chat(dto.message);
+  @HttpCode(HttpStatus.OK)
+  async chat(@Body() dto: ChatDto): Promise<ChatResponseDto> {
+    return this.aiService.chat(dto.message, dto.sessionId);
   }
 
-  @Post('recommend')
-  recommend(@Body() dto: RecommendDto) {
-    return this.aiService.recommend(dto.description, dto.products);
-  }
-
-  @Post('search')
-  searchByText(@Body() dto: SearchDto) {
-    return this.aiService.searchByText(dto.query, dto.products);
+  @Post('visual-search')
+  @HttpCode(HttpStatus.OK)
+  async visualSearch(@Body() dto: VisualSearchDto): Promise<VisualSearchResponseDto> {
+    return this.aiService.visualSearch(dto.imageBase64, dto.textFilter);
   }
 }
