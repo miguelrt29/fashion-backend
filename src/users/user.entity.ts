@@ -35,6 +35,12 @@ export class User {
   @Column({ default: true })
   isActive: boolean;
 
+  @Column({ nullable: true })
+  resetToken: string;
+
+  @Column({ type: 'timestamp', nullable: true })
+  resetTokenExpiry: Date;
+
   @CreateDateColumn()
   createdAt: Date;
 

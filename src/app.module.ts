@@ -10,6 +10,7 @@ import { ProductsModule } from './products/products.module';
 import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AiModule } from './ai/ai.module';
+import { MailModule } from './mail/mail.module';
 import { User } from './users/user.entity';
 import { Address } from './users/address.entity';
 import { Product } from './products/product.entity';
@@ -59,6 +60,7 @@ import { Coupon } from './coupons/coupon.entity';
     OrdersModule,
     PaymentsModule,
     AiModule,
+    MailModule,
     CartModule,
     FavoritesModule,
     ReviewsModule,
