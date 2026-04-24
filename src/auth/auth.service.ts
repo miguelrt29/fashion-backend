@@ -45,7 +45,7 @@ export class AuthService {
     if (!isValid) throw new UnauthorizedException('Credenciales incorrectas');
 
     // Genera el token JWT
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = { sub: user.id, userId: user.id, email: user.email, role: user.role };
     const token = this.jwtService.sign(payload);
 
     const { password: _, ...userData } = user;

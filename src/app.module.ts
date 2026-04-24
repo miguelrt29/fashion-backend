@@ -11,8 +11,19 @@ import { OrdersModule } from './orders/orders.module';
 import { PaymentsModule } from './payments/payments.module';
 import { AiModule } from './ai/ai.module';
 import { User } from './users/user.entity';
+import { Address } from './users/address.entity';
 import { Product } from './products/product.entity';
 import { Order } from './orders/order.entity';
+import { CartModule } from './cart/cart.module';
+import { CartItem } from './cart/cart.entity';
+import { FavoritesModule } from './favorites/favorites.module';
+import { Favorite } from './favorites/favorite.entity';
+import { ReviewsModule } from './reviews/reviews.module';
+import { Review } from './reviews/review.entity';
+import { NewsletterModule } from './newsletter/newsletter.module';
+import { NewsletterSubscriber } from './newsletter/newsletter-subscriber.entity';
+import { CouponsModule } from './coupons/coupons.module';
+import { Coupon } from './coupons/coupon.entity';
 
 @Module({
   imports: [
@@ -30,7 +41,7 @@ import { Order } from './orders/order.entity';
         username: config.get('DB_USERNAME'),
         password: config.get('DB_PASSWORD'),
         database: config.get('DB_NAME'),
-        entities: [User, Product, Order],
+        entities: [User, Address, Product, Order, CartItem, Favorite, Review, NewsletterSubscriber, Coupon],
         synchronize: config.get('NODE_ENV') !== 'production',
         logging: config.get('NODE_ENV') === 'development',
       }),
@@ -48,6 +59,11 @@ import { Order } from './orders/order.entity';
     OrdersModule,
     PaymentsModule,
     AiModule,
+    CartModule,
+    FavoritesModule,
+    ReviewsModule,
+    NewsletterModule,
+    CouponsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -35,17 +35,38 @@ export class Order {
   @Column('decimal', { precision: 10, scale: 2 })
   total: number;
 
-  @Column({ default: 'pending' })
-  status: string;
+  @Column({
+    type: 'enum',
+    enum: ['pending', 'confirmed', 'shipped', 'delivered', 'cancelled'],
+    default: 'pending',
+  })
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'cancelled';
 
   @Column({ nullable: true })
   paymentId: string;
 
-  @Column({ nullable: true })
-  paymentMethod: string;
+  @Column({
+    type: 'enum',
+    enum: ['stripe', 'mercadopago', 'cash'],
+    nullable: true,
+  })
+  paymentMethod: 'stripe' | 'mercadopago' | 'cash';
+
+  @Column('jsonb', { nullable: true })
+  shippingAddress: {
+    name: string;
+    street: string;
+    city: string;
+    state: string;
+    zip: string;
+    country: string;
+  };
 
   @Column({ nullable: true })
-  shippingAddress: string;
+  trackingNumber: string;
+
+  @Column({ type: 'date', nullable: true })
+  estimatedDelivery: Date;
 
   @CreateDateColumn()
   createdAt: Date;
