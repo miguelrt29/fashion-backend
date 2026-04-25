@@ -10,9 +10,13 @@ export class ProductsService {
     private productRepository: Repository<Product>,
   ) {}
 
-  async findAll(category?: string, search?: string) {
+  async findAll(gender?: string, category?: string, search?: string) {
     const query = this.productRepository.createQueryBuilder('product')
       .where('product.isActive = :isActive', { isActive: true });
+
+    if (gender) {
+      query.andWhere('product.gender = :gender', { gender });
+    }
 
     if (category) {
       query.andWhere('product.category = :category', { category });

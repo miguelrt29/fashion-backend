@@ -19,12 +19,14 @@ export class CartController {
 
   @Get()
   async getCart(@Request() req: any) {
-    return this.cartService.getCart(req.user.userId);
+    const userId = req.user.userId || req.user.sub;
+    return this.cartService.getCart(userId);
   }
 
   @Get('total')
   async getCartTotal(@Request() req: any) {
-    return this.cartService.getCartTotal(req.user.userId);
+    const userId = req.user.userId || req.user.sub;
+    return this.cartService.getCartTotal(userId);
   }
 
   @Post('add')
@@ -41,7 +43,8 @@ export class CartController {
       image?: string;
     },
   ) {
-    return this.cartService.addItem(req.user.userId, addItemDto);
+    const userId = req.user.userId || req.user.sub;
+    return this.cartService.addItem(userId, addItemDto);
   }
 
   @Put('update/:itemId')
@@ -50,16 +53,19 @@ export class CartController {
     @Param('itemId') itemId: string,
     @Body() body: { quantity: number },
   ) {
-    return this.cartService.updateQuantity(itemId, req.user.userId, body.quantity);
+    const userId = req.user.userId || req.user.sub;
+    return this.cartService.updateQuantity(itemId, userId, body.quantity);
   }
 
   @Delete('remove/:itemId')
   async removeItem(@Request() req: any, @Param('itemId') itemId: string) {
-    return this.cartService.removeItem(itemId, req.user.userId);
+    const userId = req.user.userId || req.user.sub;
+    return this.cartService.removeItem(itemId, userId);
   }
 
   @Delete('clear')
   async clearCart(@Request() req: any) {
-    return this.cartService.clearCart(req.user.userId);
+    const userId = req.user.userId || req.user.sub;
+    return this.cartService.clearCart(userId);
   }
 }

@@ -19,6 +19,10 @@ class CreateProductDto {
   category: string;
 
   @IsString()
+  @IsOptional()
+  gender: string;
+
+  @IsString()
   brand: string;
 
   @IsArray()
@@ -44,10 +48,11 @@ export class ProductsController {
 
   @Get()
   findAll(
+    @Query('gender') gender?: string,
     @Query('category') category?: string,
     @Query('search') search?: string,
   ) {
-    return this.productsService.findAll(category, search);
+    return this.productsService.findAll(gender, category, search);
   }
 
   @Get(':id')

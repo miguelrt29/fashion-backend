@@ -11,10 +11,14 @@ export class VisualSearchDto {
 
 export class VisualSearchResultItemDto {
   productId: string;
+  name: string;
+  price: number;
+  image: string;
+  category: string;
   score: number;
-  imageUrl: string;
 }
 
 export class VisualSearchResponseDto {
   results: VisualSearchResultItemDto[];
+  message?: string;
 }

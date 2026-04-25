@@ -18,7 +18,8 @@ export class FavoritesController {
 
   @Get()
   async getFavorites(@Request() req: any) {
-    return this.favoritesService.getAll(req.user.userId);
+    const userId = req.user.userId || req.user.sub;
+    return this.favoritesService.getAll(userId);
   }
 
   @Get('check/:productId')
@@ -26,16 +27,15 @@ export class FavoritesController {
     @Request() req: any,
     @Param('productId') productId: string,
   ) {
-    const isFavorite = await this.favoritesService.checkIsFavorite(
-      req.user.userId,
-      productId,
-    );
+    const userId = req.user.userId || req.user.sub;
+    const isFavorite = await this.favoritesService.checkIsFavorite(userId, productId);
     return { isFavorite };
   }
 
   @Get('count')
   async getFavoritesCount(@Request() req: any) {
-    const count = await this.favoritesService.getFavoritesCount(req.user.userId);
+    const userId = req.user.userId || req.user.sub;
+    const count = await this.favoritesService.getFavoritesCount(userId);
     return { count };
   }
 
@@ -51,7 +51,8 @@ export class FavoritesController {
       category?: string;
     },
   ) {
-    return this.favoritesService.add(req.user.userId, addFavoriteDto);
+    const userId = req.user.userId || req.user.sub;
+    return this.favoritesService.add(userId, addFavoriteDto);
   }
 
   @Delete('remove/:favoriteId')
@@ -59,6 +60,7 @@ export class FavoritesController {
     @Request() req: any,
     @Param('favoriteId') favoriteId: string,
   ) {
-    return this.favoritesService.remove(favoriteId, req.user.userId);
+    const userId = req.user.userId || req.user.sub;
+    return this.favoritesService.remove(favoriteId, userId);
   }
 }

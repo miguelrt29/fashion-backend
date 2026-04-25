@@ -26,6 +26,9 @@ export class Product {
   @Column()
   category: string;
 
+  @Column({ nullable: true })
+  gender: string;
+
   @Column()
   brand: string;
 

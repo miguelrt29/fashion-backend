@@ -1,282 +1,344 @@
-import { Injectable, Logger, HttpException, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { ConfigService } from '@nestjs/config';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { firstValueFrom } from 'rxjs';
-import { Product } from '../products/product.entity';
-import { cosineSimilarity } from './helpers/similarity';
+import { firstValueFrom, timeout } from 'rxjs';
+import { ProductsService } from '../products/products.service';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
 }
 
+interface ProductInfo {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+  gender?: string;
+  images?: string[];
+  sizes?: string[];
+  colors?: string[];
+  discount?: number;
+}
+
+const FALLBACK_RESPONSE = {
+  text: 'Lo siento, tuve un problema. ¿Podrías intentar de nuevo?',
+  products: []
+};
+
+const HF_TIMEOUT = 10000;
+
 @Injectable()
 export class AiService {
   private readonly logger = new Logger(AiService.name);
   private readonly apiKey: string;
-  private readonly hfApiUrl = 'https://api-inference.huggingface.co/models';
-  private readonly hfInferenceUrl = 'https://api-inference.huggingface.co/pipeline/feature-extraction';
+  private readonly hfRouterUrl = 'https://router.huggingface.co/v1/chat/completions';
 
   private readonly chatHistories: Map<string, ChatMessage[]> = new Map();
-  private readonly imageEmbeddingsCache: Map<string, { embedding: number[]; timestamp: number }> = new Map();
-  private readonly CACHE_TTL_MS = 60 * 60 * 1000;
+  private productsCache: ProductInfo[] = [];
+  private lastCacheTime = 0;
+  private readonly CACHE_TTL_MS = 5 * 60 * 1000;
 
   constructor(
     private httpService: HttpService,
     private configService: ConfigService,
-    @InjectRepository(Product)
-    private productRepository: Repository<Product>,
+    private productsService: ProductsService,
   ) {
-    this.apiKey = this.configService.get<string>('HUGGING_FACE_API_KEY') ?? '';
+    this.apiKey = this.configService.get<string>('HUGGING_FACE_API_KEY') || process.env['HUGGING_FACE_API_KEY'] || '';
   }
 
-  private async callHfInference(model: string, inputs: any, parameters?: any): Promise<any> {
+  private makeMessagesHistory(history: ChatMessage[]): { role: string; content: string }[] {
+    return history.map(msg => ({
+      role: msg.role === 'assistant' ? 'assistant' : 'user',
+      content: msg.content
+    }));
+  }
+
+  private async getProductsCatalog(): Promise<ProductInfo[]> {
+    if (this.productsCache.length > 0 && Date.now() - this.lastCacheTime < this.CACHE_TTL_MS) {
+      return this.productsCache;
+    }
+    try {
+      const products = await this.productsService.findAll();
+      this.productsCache = products.map(p => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        category: p.category || '',
+        gender: p.gender,
+        images: p.images || [],
+        sizes: p.sizes || [],
+        colors: p.colors || [],
+        discount: p.discount || 0
+      }));
+      this.lastCacheTime = Date.now();
+      return this.productsCache;
+    } catch (error) {
+      this.logger.error('Error fetching products:', error.message);
+      return [];
+    }
+  }
+
+  private buildSystemPrompt(products: ProductInfo[]): string {
+    const productList = products.slice(0, 30).map(p => {
+      const sizes = p.sizes?.join(', ') || 'Todas';
+      const colors = p.colors?.join(', ') || 'Varios';
+      return `${p.id}|${p.name}|$${p.price}|${p.category}|${p.gender || 'Unisex'}|${sizes}|${colors}|${p.discount || 0}% descuento`;
+    }).join('\n');
+
+    return `Eres el asistente virtual de FashionStore, la mejor tienda de moda online de Colombia.
+Tu trabajo es ayudar a los clientes a encontrar productos y responder sus preguntas.
+
+REGLAS IMPORTANTES:
+1. NUNCA inventes productos. Solo usa los del catálogo.
+2. Siempre responde en formato JSON válido, nunca en texto plano cuando muestres productos.
+3. Habla en español colombiano, amigable y servicial.
+4. Sé conciso, no escribas mensajes muy largos.
+
+CATÁLOGO DISPONIBLE:
+${productList}
+${products.length > 30 ? `[... y ${products.length - 30} productos más]` : ''}
+
+CUANDO EL CLIENTE PIDA PRODUCTOS:
+Analiza la petición y busca coincidencias en el catálogo.
+Responde EXACTAMENTE así:
+{
+  "text": "Breve mensaje amigable (máximo 2 oraciones)",
+  "products": [
+    {
+      "id": "uuid-del-producto",
+      "name": "nombre exacto",
+      "price": precio,
+      "category": "categoría",
+      "gender": "género",
+      "images": ["url-imagen"],
+      "sizes": ["S","M","L"],
+      "colors": ["Negro","Blanco"],
+      "discount": 0
+    }
+  ]
+}
+
+CUANDO NO HAYA PRODUCTOS:
+{
+  "text": "Lo siento, no tenemos ese producto. Estos son similares...",
+  "products": []
+}
+
+CUANDO PREGUNTE POR OFERTAS:
+Busca productos con discount > 0.
+{
+  "text": "¡Tenemos estas ofertas para ti!",
+  "products": [...]
+}
+
+CUANDO PREGUNTE POR UNA CATEGORÍA (camisetas, pantalones, etc):
+{
+  "text": "Aquí tienes las [categoría] que tenemos:",
+  "products": [...]
+}
+
+CUANDO QUIERA AÑADIR AL CARRITO:
+No agregues nada al carrito tú. Solo muestra los productos disponibles.
+El frontend se encargará de añadir al carrito cuando el usuario dé clic en el botón.
+Responde con los productos que quiere añadir.
+
+EJEMPLOS DE RESPUESTA CORRECTA:
+{"text":"¡Claro! Aquí tienes las mejores camisetas de nuestra colección:","products":[{"id":"abc123","name":"Camiseta Algodón Basic","price":89000,"category":"Camisetas","gender":"Unisex","images":["https://..."],"sizes":["S","M","L","XL"],"colors":["Blanco","Negro"],"discount":0}]}
+
+{"text":"No tenemos ese producto, pero te recomiendo estos jeans:","products":[...]}
+
+{"text":"¡Claro! ¿Qué producto quieres añadir al carrito?","products":[]}
+
+IMPORTANTE: Responde EXCLUSIVAMENTE JSON válido, sin texto antes o después.`;
+  }
+
+  private parseJsonResponse(text: string): { text: string; products: ProductInfo[] } {
+    try {
+      const match = text.match(/\{[\s\S*"text"[\s\S*"products"[\s\S]*\]/);
+      if (match) {
+        const parsed = JSON.parse(match[0]);
+        if (parsed.text && Array.isArray(parsed.products)) {
+          return {
+            text: parsed.text,
+            products: parsed.products.map((p: any) => ({
+              id: p.id || '',
+              name: p.name || '',
+              price: Number(p.price) || 0,
+              category: p.category || '',
+              gender: p.gender || '',
+              images: p.images || [],
+              sizes: p.sizes || [],
+              colors: p.colors || [],
+              discount: p.discount || 0
+            }))
+          };
+        }
+      }
+    } catch (e) {
+      this.logger.warn('Failed to parse JSON response');
+    }
+    return { text, products: [] };
+  }
+
+  async chat(message: string, sessionId: string): Promise<any> {
+    let history = this.chatHistories.get(sessionId) || [];
+    const products = await this.getProductsCatalog();
+    const systemPrompt = this.buildSystemPrompt(products);
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...this.makeMessagesHistory(history),
+      { role: 'user', content: message }
+    ];
+
     try {
       const response = await firstValueFrom(
         this.httpService.post(
-          `${this.hfApiUrl}/${model}`,
-          { inputs, parameters },
+          this.hfRouterUrl,
+          {
+            model: 'meta-llama/Llama-3.2-1B-Instruct',
+            messages,
+            max_tokens: 300,
+            temperature: 0.7,
+          },
           {
             headers: {
               Authorization: `Bearer ${this.apiKey}`,
               'Content-Type': 'application/json',
             },
           },
-        ),
+        ).pipe(timeout(HF_TIMEOUT)),
       );
-      return response.data;
+
+      if (!response?.data?.choices?.length) {
+        const reply = FALLBACK_RESPONSE;
+        history.push({ role: 'user', content: message });
+        history.push({ role: 'assistant', content: JSON.stringify(reply) });
+        this.chatHistories.set(sessionId, history.slice(-12));
+        return reply;
+      }
+
+      let replyText = response.data.choices[0].message.content || '';
+      const shouldEscalate = replyText.startsWith('[ESCALAR]');
+      if (shouldEscalate) replyText = replyText.replace('[ESCALAR]', '').trim();
+
+      const result = this.parseJsonResponse(replyText);
+      if (!result.text) {
+        result.text = replyText;
+      }
+
+      history.push({ role: 'user', content: message });
+      history.push({ role: 'assistant', content: replyText });
+      this.chatHistories.set(sessionId, history.slice(-12));
+
+      return {
+        ...result,
+        shouldEscalate,
+        sessionId
+      };
+
     } catch (error) {
-      this.logger.error(`HF API error with model ${model}:`, error.response?.data || error.message);
-      throw new HttpException(
-        `Error communicating with AI service: ${error.response?.data?.error || error.message}`,
-        error.response?.status || 502,
-      );
+      this.logger.error('Chat error:', error.response?.data || error.message);
+      const reply = FALLBACK_RESPONSE;
+      history.push({ role: 'user', content: message });
+      history.push({ role: 'assistant', content: JSON.stringify(reply) });
+      this.chatHistories.set(sessionId, history.slice(-12));
+      return reply;
     }
   }
 
-  private async getEmbedding(text: string, model: string = 'sentence-transformers/all-MiniLM-L6-v2'): Promise<number[]> {
-    const response = await this.callHfInference(model, { inputs: text });
-    return Array.isArray(response) ? response : response[0] || response;
+  async visualSearch(imageBase64: string): Promise<{ results: any[]; message?: string }> {
+    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+    const products = await this.getProductsCatalog();
+
+    try {
+      const response = await firstValueFrom(
+        this.httpService.post(
+          'https://router.huggingface.co/feature-extraction/google/vit-base-patch16-224',
+          { inputs: base64Data },
+          {
+            headers: {
+              Authorization: `Bearer ${this.apiKey}`,
+              'Content-Type': 'application/json',
+            },
+          },
+        ).pipe(timeout(8000)),
+      );
+
+      const labels = response.data?.slice(0, 8)?.map((item: any) => item.label.toLowerCase()) || [];
+
+      if (labels.length === 0) {
+        return this.getFeaturedProducts(products);
+      }
+
+      const matched = products.filter(product => {
+        const searchText = `${product.name} ${product.category}`.toLowerCase();
+        return labels.some(label =>
+          searchText.includes(label) ||
+          label.split(' ').some(word => searchText.includes(word) && word.length > 2)
+        );
+      });
+
+      if (matched.length >= 2) {
+        return {
+          results: matched.slice(0, 8).map(p => ({
+            productId: p.id,
+            name: p.name,
+            price: p.price,
+            category: p.category,
+            image: p.images?.[0] || '',
+            score: 1
+          })),
+          message: `Encontré ${matched.length} productos similares`
+        };
+      }
+
+      return this.getFeaturedProducts(products);
+
+    } catch (error) {
+      this.logger.error('Visual search error:', error.response?.data || error.message);
+      return this.getFeaturedProducts(products);
+    }
+  }
+
+  private getFeaturedProducts(products: ProductInfo[]): { results: any[]; message?: string } {
+    const featured = products.slice(0, 8).map(p => ({
+      productId: p.id,
+      name: p.name,
+      price: p.price,
+      category: p.category,
+      image: p.images?.[0] || '',
+      score: 1
+    }));
+
+    return {
+      results: featured,
+      message: 'Te recomendamos nuestros productos destacados'
+    };
   }
 
   async getRecommendations(viewedProductIds: string[]): Promise<{ recommendations: { productId: string; score: number }[] }> {
-    if (viewedProductIds.length === 0) {
-      return { recommendations: [] };
-    }
-
-    const viewedProducts = await this.productRepository
-      .createQueryBuilder('product')
-      .whereInIds(viewedProductIds)
-      .getMany();
-
-    if (viewedProducts.length === 0) {
-      return { recommendations: [] };
-    }
-
-    const viewedEmbeddings: number[][] = [];
-    for (const product of viewedProducts) {
-      const text = `${product.name} ${product.description} ${product.category || ''} ${product.brand || ''}`;
-      try {
-        const embedding = await this.getEmbedding(text);
-        viewedEmbeddings.push(embedding);
-      } catch (error) {
-        this.logger.warn(`Failed to get embedding for product ${product.id}:`, error);
-      }
-    }
-
-    if (viewedEmbeddings.length === 0) {
-      throw new BadRequestException('Could not generate embeddings for viewed products');
-    }
-
-    const centroidEmbedding = viewedEmbeddings.reduce((acc, emb) =>
-      acc.map((val, i) => val + emb[i] / viewedEmbeddings.length),
-    );
-
-    const allProducts = await this.productRepository
-      .createQueryBuilder('product')
-      .where('product.isActive = :isActive', { isActive: true })
-      .andWhere('product.id NOT IN (:...viewedIds)', { viewedIds: viewedProductIds.length > 0 ? viewedProductIds : ['__none__'] })
-      .getMany();
-
-    const similarities: { productId: string; score: number }[] = [];
-
-    for (const product of allProducts) {
-      const text = `${product.name} ${product.description} ${product.category || ''} ${product.brand || ''}`;
-      try {
-        const productEmbedding = await this.getEmbedding(text);
-        const similarity = cosineSimilarity(centroidEmbedding, productEmbedding);
-        similarities.push({ productId: product.id, score: similarity });
-      } catch (error) {
-        this.logger.warn(`Failed to get embedding for product ${product.id}:`, error);
-      }
-    }
-
-    similarities.sort((a, b) => b.score - a.score);
-
-    return { recommendations: similarities.slice(0, 8) };
-  }
-
-  async chat(message: string, sessionId: string): Promise<{ reply: string; shouldEscalate: boolean; sessionId: string }> {
-    const systemMessage = `Eres un asistente de atención al cliente de una tienda de moda online.
-Eres amable, profesional y conciso. Conoces las siguientes políticas:
-- Devoluciones hasta 30 días sin uso
-- Envío gratis sobre $100.000 COP
-- Los pedidos se procesan en 1-3 días hábiles
-- Si el cliente está muy frustrado o el problema es un reembolso mayor a $50.000 COP, responde con la etiqueta [ESCALAR] al inicio de tu mensaje.
-Responde siempre en el idioma del cliente.`;
-
-    let history = this.chatHistories.get(sessionId) || [];
-
-    history.push({ role: 'user', content: message });
-
-    if (history.length > 10) {
-      history = history.slice(-10);
-    }
-
-    const conversationHistory = history
-      .map(msg => msg.role === 'user' ? `Cliente: ${msg.content}` : `Asistente: ${msg.content}`)
-      .join('\n');
-
-    const fullPrompt = `<s>[INST] ${systemMessage} [/INST]\n\n${conversationHistory}\n\nAsistente:`;
-
     try {
-      const response = await firstValueFrom(
-        this.httpService.post(
-          `${this.hfApiUrl}/mistralai/Mistral-7B-Instruct-v0.3`,
-          {
-            inputs: fullPrompt,
-            parameters: {
-              max_new_tokens: 300,
-              temperature: 0.7,
-              do_sample: true,
-            },
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${this.apiKey}`,
-              'Content-Type': 'application/json',
-            },
-          },
-        ),
-      );
-
-      let reply = response.data?.[0]?.generated_text || '';
-      reply = reply.replace(fullPrompt, '').trim();
-
-      if (reply.length === 0) {
-        reply = 'Lo siento, no pude procesar tu mensaje. ¿Podrías reformular tu pregunta?';
+      const products = await this.getProductsCatalog();
+      if (viewedProductIds.length === 0 || products.length === 0) {
+        return { recommendations: [] };
       }
 
-      const shouldEscalate = reply.startsWith('[ESCALAR]');
+      const viewed = products.filter(p => viewedProductIds.includes(p.id));
+      if (viewed.length === 0) {
+        return { recommendations: [] };
+      }
 
-      history.push({ role: 'assistant', content: reply });
-      this.chatHistories.set(sessionId, history);
+      const categories = [...new Set(viewed.map(p => p.category))];
+      const recommendations = products
+        .filter(p => !viewedProductIds.includes(p.id) && categories.includes(p.category))
+        .slice(0, 8)
+        .map(p => ({ productId: p.id, score: 0.9 }));
 
-      return { reply, shouldEscalate, sessionId };
+      return { recommendations };
     } catch (error) {
-      this.logger.error('Chat error:', error.response?.data || error.message);
-      throw new HttpException(
-        'Error communicating with AI chat service',
-        502,
-      );
-    }
-  }
-
-  async visualSearch(imageBase64: string, textFilter?: string): Promise<{ results: { productId: string; score: number; imageUrl: string }[] }> {
-    const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
-    
-    try {
-      const response = await firstValueFrom(
-        this.httpService.post(
-          'https://api-inference.huggingface.co/pipeline/feature-extraction/openai/clip-vit-base-patch32',
-          {
-            inputs: base64Data,
-          },
-          {
-            headers: {
-              Authorization: `Bearer ${this.apiKey}`,
-              'Content-Type': 'application/json',
-            },
-          },
-        ),
-      );
-
-      const queryEmbedding: number[] = Array.isArray(response.data) ? response.data : response.data?.[0] || [];
-
-      if (queryEmbedding.length === 0) {
-        throw new BadRequestException('Could not extract features from the image');
-      }
-
-      const queryBuilder = this.productRepository
-        .createQueryBuilder('product')
-        .where('product.isActive = :isActive', { isActive: true })
-        .andWhere('product.images IS NOT NULL')
-        .andWhere('array_length(product.images, 1) > 0');
-
-      if (textFilter) {
-        queryBuilder.andWhere(
-          'LOWER(product.name) LIKE :filter OR LOWER(product.description) LIKE :filter',
-          { filter: `%${textFilter.toLowerCase()}%` },
-        );
-      }
-
-      const products = await queryBuilder.getMany();
-
-      const results: { productId: string; score: number; imageUrl: string }[] = [];
-
-      for (const product of products) {
-        if (!product.images || product.images.length === 0) continue;
-        
-        const imageKey = product.images[0];
-        const cached = this.imageEmbeddingsCache.get(imageKey);
-        let productEmbedding: number[];
-
-        if (cached && Date.now() - cached.timestamp < this.CACHE_TTL_MS) {
-          productEmbedding = cached.embedding;
-        } else {
-          try {
-            const embResponse = await firstValueFrom(
-              this.httpService.post(
-                'https://api-inference.huggingface.co/pipeline/feature-extraction/openai/clip-vit-base-patch32',
-                { inputs: imageKey },
-                {
-                  headers: {
-                    Authorization: `Bearer ${this.apiKey}`,
-                  },
-                },
-              ),
-            );
-            productEmbedding = Array.isArray(embResponse.data) ? embResponse.data : embResponse.data?.[0] || [];
-            this.imageEmbeddingsCache.set(imageKey, {
-              embedding: productEmbedding,
-              timestamp: Date.now(),
-            });
-          } catch {
-            this.logger.warn(`Failed to get embedding for product image: ${imageKey}`);
-            continue;
-          }
-        }
-
-        const similarity = cosineSimilarity(queryEmbedding, productEmbedding);
-        results.push({
-          productId: product.id,
-          score: similarity,
-          imageUrl: imageKey,
-        });
-      }
-
-      results.sort((a, b) => b.score - a.score);
-
-      return { results: results.slice(0, 12) };
-    } catch (error) {
-      if (error instanceof BadRequestException) throw error;
-      this.logger.error('Visual search error:', error.response?.data || error.message);
-      throw new HttpException(
-        'Error processing visual search',
-        502,
-      );
+      return { recommendations: [] };
     }
   }
 
