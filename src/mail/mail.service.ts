@@ -46,7 +46,9 @@ export class MailService {
 
     try {
       await this.mailerService.sendMail(mailOptions);
-      console.log(`✅ Email de bienvenida enviado exitosamente a ${user.email}`);
+      console.log(
+        `✅ Email de bienvenida enviado exitosamente a ${user.email}`,
+      );
     } catch (error) {
       console.error(`❌ Error enviando email de bienvenida:`, error.message);
     }
@@ -82,7 +84,9 @@ export class MailService {
 
     try {
       await this.mailerService.sendMail(mailOptions);
-      console.log(`✅ Email de recuperación enviado exitosamente a ${user.email}`);
+      console.log(
+        `✅ Email de recuperación enviado exitosamente a ${user.email}`,
+      );
     } catch (error) {
       console.error(`❌ Error enviando email de recuperación:`, error.message);
     }

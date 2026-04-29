@@ -1,4 +1,10 @@
-import { IsString, IsArray, IsOptional, ValidateNested, Length } from 'class-validator';
+import {
+  IsString,
+  IsArray,
+  IsOptional,
+  ValidateNested,
+  Length,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class ChatDto {
@@ -9,6 +15,10 @@ export class ChatDto {
   @IsString()
   @Length(1, 100)
   sessionId: string;
+
+  @IsOptional()
+  @IsString()
+  imageBase64?: string;
 }
 
 export class ChatProductDto {

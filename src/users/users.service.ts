@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
@@ -70,7 +75,9 @@ export class UsersService {
     }
 
     if (changePasswordDto.newPassword.length < 6) {
-      throw new BadRequestException('New password must be at least 6 characters');
+      throw new BadRequestException(
+        'New password must be at least 6 characters',
+      );
     }
 
     user.password = await bcrypt.hash(changePasswordDto.newPassword, 10);

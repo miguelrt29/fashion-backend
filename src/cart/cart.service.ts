@@ -5,16 +5,31 @@ import { CartItem } from './cart.entity';
 
 @Injectable()
 export class CartService {
+  private readonly backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
+
   constructor(
     @InjectRepository(CartItem)
     private cartRepository: Repository<CartItem>,
   ) {}
 
+  private normalizeImage(image: string): string {
+    if (!image) return '';
+    if (image.startsWith('http://') || image.startsWith('https://')) {
+      return image;
+    }
+    const cleanPath = image.startsWith('/') ? image : `/${image}`;
+    return `${this.backendUrl}${cleanPath}`;
+  }
+
   async getCart(userId: string): Promise<CartItem[]> {
-    return this.cartRepository.find({
+    const items = await this.cartRepository.find({
       where: { userId },
       order: { createdAt: 'DESC' },
     });
+    return items.map(item => ({
+      ...item,
+      image: this.normalizeImage(item.image),
+    }));
   }
 
   async addItem(
@@ -50,7 +65,11 @@ export class CartService {
     return this.cartRepository.save(cartItem);
   }
 
-  async updateQuantity(itemId: string, userId: string, quantity: number): Promise<CartItem | void> {
+  async updateQuantity(
+    itemId: string,
+    userId: string,
+    quantity: number,
+  ): Promise<CartItem | void> {
     const item = await this.cartRepository.findOne({
       where: { id: itemId, userId },
     });
@@ -79,7 +98,9 @@ export class CartService {
     await this.cartRepository.delete({ userId });
   }
 
-  async getCartTotal(userId: string): Promise<{ total: number; items: number }> {
+  async getCartTotal(
+    userId: string,
+  ): Promise<{ total: number; items: number }> {
     const items = await this.getCart(userId);
     const total = items.reduce(
       (sum, item) => sum + Number(item.price) * item.quantity,

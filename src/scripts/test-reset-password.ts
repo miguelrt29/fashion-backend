@@ -39,7 +39,7 @@ async function testResetPasswordFlow() {
 
   const userResult = await pool.query(
     'SELECT id, "resetToken", "resetTokenExpiry" FROM users WHERE email = $1',
-    [email]
+    [email],
   );
 
   if (userResult.rows.length === 0) {
@@ -49,7 +49,7 @@ async function testResetPasswordFlow() {
   }
 
   const { resetToken, resetTokenExpiry } = userResult.rows[0];
-  
+
   if (!resetToken) {
     console.log('❌ No hay token de reset (¿el paso 1 falló?)');
     await pool.end();
@@ -58,8 +58,12 @@ async function testResetPasswordFlow() {
 
   console.log(`   Token: ${resetToken}`);
   console.log(`   Expira: ${resetTokenExpiry}`);
-  console.log('\n   📧 Revisa el email o verifica el token en la URL del enlace');
-  console.log(`   URL: http://localhost:4200/reset-password?token=${resetToken}`);
+  console.log(
+    '\n   📧 Revisa el email o verifica el token en la URL del enlace',
+  );
+  console.log(
+    `   URL: http://localhost:4200/reset-password?token=${resetToken}`,
+  );
 
   await pool.end();
 

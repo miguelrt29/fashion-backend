@@ -5,8 +5,6 @@ import { firstValueFrom, timeout } from 'rxjs';
 import { ProductsService } from '../products/products.service';
 import { EmbeddingService } from './embedding.service';
 import { batchCosineSimilarity, normalizeVector } from './helpers/similarity';
-import * as fs from 'fs';
-import * as path from 'path';
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -45,8 +43,6 @@ export class AiService {
   private readonly CACHE_TTL_MS = 5 * 60 * 1000;
   private readonly backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
 
-  private storeKnowledge: any = null;
-
   constructor(
     private httpService: HttpService,
     private configService: ConfigService,
@@ -54,20 +50,6 @@ export class AiService {
     private embeddingService: EmbeddingService,
   ) {
     this.apiKey = this.configService.get<string>('HUGGING_FACE_API_KEY') || process.env['HUGGING_FACE_API_KEY'] || '';
-  }
-
-  private loadStoreKnowledge(): any {
-    if (this.storeKnowledge) return this.storeKnowledge;
-
-    try {
-      const knowledgePath = path.join(__dirname, 'store-knowledge.json');
-      const raw = fs.readFileSync(knowledgePath, 'utf-8');
-      this.storeKnowledge = JSON.parse(raw);
-      return this.storeKnowledge;
-    } catch (error) {
-      this.logger.error('Error loading store-knowledge.json:', error.message);
-      return null;
-    }
   }
 
   private makeMessagesHistory(history: ChatMessage[]): { role: string; content: string }[] {
@@ -122,48 +104,29 @@ export class AiService {
       return `${i+1}. ${p.name} - $${p.price} - Tallas: ${sizes} - Colores: ${colors} - Img: ${image}`;
     }).join('\n');
 
-    const knowledge = this.loadStoreKnowledge();
-    let knowledgeText = '';
-
-    if (knowledge) {
-      knowledgeText = `
-BASE DE CONOCIMIENTO:
-- Envío: $${knowledge.shipping.cost} COP (gratis en compras > $${knowledge.shipping.free_shipping_min} COP)
-- Tiempo de entrega: ${knowledge.shipping.time_bogota} Bogotá, ${knowledge.shipping.time_other_cities} otras ciudades
-- Garantía: ${knowledge.warranty.duration_days} días por defectos de fábrica
-- Devoluciones: ${knowledge.returns.period_days} días, producto sin uso
-- Métodos de pago: Stripe (3 cuotas), MercadoPago, Contraentrega (Bogotá)
-- Contacto: ${knowledge.store.email}
-- Horario: ${knowledge.store.hours}
-
-PREGUNTAS FRECUENTES:
-${knowledge.faq.map((f: any) => `Q: ${f.question}\nA: ${f.answer}`).join('\n')}`;
-    }
-
     return `Eres un asesor de ventas de FashionStore, Colombia.
 Responde de forma profesional, breve (máximo 2 oraciones) y sin usar ** ni markdown.
 
-INSTRUCCIONES ESTRICTAS:
-1. Si saludan: responde TEXTO PLANO cordial, NO JSON.
-2. Si preguntan sobre la tienda (envíos, pagos, garantías): responde TEXTO PLANO usando la BASE DE CONOCIMIENTO, NO JSON.
-3. Si preguntan por productos: responde SOLO JSON VÁLIDO (sin texto antes o después).
+INSTRUCCIONES:
+1. Si saludan (hola, hi, buenos días): responde texto natural cordial, NO JSON.
+2. Si preguntan por productos: responde SOLO JSON con el formato abajo.
+3. SOLO usa productos del catálogo listado.
 4. NUNCA uses **, ##, ni markdown en tus respuestas.
-5. SOLO usa productos del catálogo listado abajo.${knowledgeText}
 
 CATÁLOGO (máximo 15):
 ${productList}
 ${products.length > 15 ? `\n... y ${products.length - 15} productos más` : ''}
 
-FORMATO JSON (úsalo SOLO al mostrar productos, nada de texto antes o después):
-{"text":"Mensaje breve","products":[{"id":"uuid","name":"nombre","price":0,"category":"cat","gender":"género","images":["url"],"sizes":["S"],"colors":["Color"],"discount":0}]}
+FORMATO JSON (úsalo SOLO al mostrar productos):
+{
+  "text": "Mensaje breve",
+  "products": [{"id":"uuid","name":"nombre","price":0,"category":"cat","gender":"género","images":["url"],"sizes":["S"],"colors":["Color"],"discount":0}]
+}
 
-EJEMPLO SALUDO (texto plano, sin JSON):
-¡Hola! Bienvenido a FashionStore. ¿Qué producto buscas hoy?
+EJEMPLO SALUDO (texto plano):
+"¡Hola! Bienvenido a FashionStore. ¿Qué producto buscas hoy?"
 
-EJEMPLO PREGUNTA TIENDA (texto plano, sin JSON):
-El envío cuesta $15,000 COP y es gratis en compras superiores a $150,000 COP.
-
-EJEMPLO PRODUCTOS (SOLO JSON, nada más):
+EJEMPLO PRODUCTOS (JSON):
 {"text":"Aquí tienes camisetas:","products":[{"id":"abc123","name":"Camiseta Algodón","price":89000,"category":"Camisetas","gender":"Unisex","images":["http://localhost:3000/uploads/camiseta.jpg"],"sizes":["S","M"],"colors":["Blanco"],"discount":0}]}
 
 PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muestres productos.`;
@@ -172,35 +135,48 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
   private parseJsonResponse(text: string): { text: string; products: ProductInfo[] } {
     try {
       let cleanText = text.trim();
-
-      // Limpiar markdown, **, comillas triples
-      cleanText = cleanText.replace(/```json\n?/g, '').replace(/```\n?/g, '');
-      cleanText = cleanText.replace(/\*\*/g, '').replace(/\*/g, '');
-
-      // Buscar primer { y último }
-      const firstBrace = cleanText.indexOf('{');
-      const lastBrace = cleanText.lastIndexOf('}');
-
-      if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-        const jsonStr = cleanText.substring(firstBrace, lastBrace + 1);
-        const parsed = JSON.parse(jsonStr);
-
-        if (parsed && parsed.text !== undefined && Array.isArray(parsed.products)) {
-          return {
-            text: String(parsed.text).replace(/\*\*/g, '').replace(/\*/g, '').trim(),
-            products: parsed.products.map((p: any) => ({
-              id: p.id || '',
-              name: p.name || '',
-              price: Number(p.price) || 0,
-              category: p.category || '',
-              gender: p.gender || '',
-              images: this.normalizeImages(Array.isArray(p.images) ? p.images : []),
-              sizes: Array.isArray(p.sizes) ? p.sizes : [],
-              colors: Array.isArray(p.colors) ? p.colors : [],
-              discount: Number(p.discount) || 0
-            }))
-          };
+      
+      // Limpiar markdown y **
+      cleanText = cleanText.replace(/\*\*/g, "");
+      cleanText = cleanText.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+      cleanText = cleanText.replace(/\*/g, "");
+      cleanText = cleanText.replace(/\*\*/g, "");
+      cleanText = cleanText.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+      cleanText = cleanText.replace(/\*/g, "");
+      cleanText = cleanText.replace(/\*\*/g, "");
+      cleanText = cleanText.replace(/```json\n?/g, "").replace(/```\n?/g, "");
+      cleanText = cleanText.replace(/\*/g, "");
+      
+      // Intentar parsear directo
+      let parsed: any = null;
+      
+      try {
+        parsed = JSON.parse(cleanText);
+      } catch {
+        // Buscar primer { y último }
+        const firstBrace = cleanText.indexOf('{');
+        const lastBrace = cleanText.lastIndexOf('}');
+        if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+          const jsonStr = cleanText.substring(firstBrace, lastBrace + 1);
+          parsed = JSON.parse(jsonStr);
         }
+      }
+      
+      if (parsed && parsed.text !== undefined && Array.isArray(parsed.products)) {
+        return {
+          text: String(parsed.text).replace(/\*\*/g, '').replace(/\*/g, '').trim(),
+          products: parsed.products.map((p: any) => ({
+            id: p.id || '',
+            name: p.name || '',
+            price: Number(p.price) || 0,
+            category: p.category || '',
+            gender: p.gender || '',
+            images: this.normalizeImages(Array.isArray(p.images) ? p.images : []),
+            sizes: Array.isArray(p.sizes) ? p.sizes : [],
+            colors: Array.isArray(p.colors) ? p.colors : [],
+            discount: Number(p.discount) || 0
+          }))
+        };
       }
     } catch (e) {
       this.logger.warn('Failed to parse JSON response: ' + e.message);
@@ -227,38 +203,7 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
       return reply;
     }
 
-    // Detectar si pregunta por productos y buscar directamente
     const products = await this.getProductsCatalog();
-    const productQuery = this.detectProductQuery(message.toLowerCase());
-
-    if (productQuery) {
-      const matchedProducts = this.searchProducts(productQuery, products);
-
-      if (matchedProducts.length > 0) {
-        const reply = {
-          text: `Aquí tienes ${matchedProducts.length} productos que coinciden:`,
-          products: matchedProducts.slice(0, 8).map(p => ({
-            id: p.id,
-            name: p.name,
-            price: Number(p.price) || 0,
-            category: p.category,
-            gender: p.gender || '',
-            images: p.images || [],
-            sizes: p.sizes || [],
-            colors: p.colors || [],
-            discount: Number(p.discount) || 0
-          })),
-          shouldEscalate: false,
-          sessionId
-        };
-
-        history.push({ role: 'user', content: message });
-        history.push({ role: 'assistant', content: JSON.stringify(reply) });
-        this.chatHistories.set(sessionId, history.slice(-12));
-        return reply;
-      }
-    }
-
     const systemPrompt = this.buildSystemPrompt(products);
 
     let userContent: string = message;
@@ -306,7 +251,7 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
               model: 'meta-llama/Llama-3.2-1B-Instruct',
               messages,
               max_tokens: 500,
-              temperature: 0.1,
+              temperature: 0.5,
             },
             {
               headers: {
@@ -597,45 +542,5 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
 
   clearChatHistory(sessionId: string): void {
     this.chatHistories.delete(sessionId);
-  }
-
-  private detectProductQuery(message: string): string | null {
-    const productKeywords = [
-      'camiseta', 'camisa', 'polo', 'blusa',
-      'pantalon', 'jeans', 'pantalón', 'pants',
-      'zapato', 'zapatilla', 'tenis', 'botin',
-      'vestido', 'dress',
-      'chaqueta', 'chamarra', 'blazer', 'saco',
-      'gorra', 'bolso', 'accesorio',
-      'muestra', 'busco', 'necesito', 'quiero',
-      'ver', 'productos', 'ropa'
-    ];
-
-    for (const keyword of productKeywords) {
-      if (message.includes(keyword)) {
-        return message;
-      }
-    }
-
-    return null;
-  }
-
-  private searchProducts(query: string, products: ProductInfo[]): ProductInfo[] {
-    const words = query.toLowerCase().split(' ').filter(w => w.length > 2);
-
-    return products.filter(p => {
-      const nameAndCategory = `${p.name} ${p.category}`.toLowerCase();
-      const colors = (p.colors || []).join(' ').toLowerCase();
-      const sizes = (p.sizes || []).join(' ').toLowerCase();
-
-      // Buscar si alguna palabra clave coincide
-      return words.some(word =>
-        nameAndCategory.includes(word) ||
-        colors.includes(word) ||
-        sizes.includes(word) ||
-        p.category.toLowerCase().includes(word) ||
-        p.name.toLowerCase().includes(word)
-      );
-    });
   }
 }

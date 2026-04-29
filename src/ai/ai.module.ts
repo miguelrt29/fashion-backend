@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AiController } from './ai.controller';
 import { AiService } from './ai.service';
+import { EmbeddingService } from './embedding.service';
 import { Product } from '../products/product.entity';
 import { ProductsModule } from '../products/products.module';
 
@@ -18,7 +19,7 @@ import { ProductsModule } from '../products/products.module';
     ProductsModule,
   ],
   controllers: [AiController],
-  providers: [AiService],
-  exports: [AiService],
+  providers: [AiService, EmbeddingService],
+  exports: [AiService, EmbeddingService],
 })
 export class AiModule {}

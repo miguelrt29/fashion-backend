@@ -47,6 +47,9 @@ export class Product {
   @Column({ nullable: true })
   discount: number;
 
+  @Column('simple-array', { nullable: true })
+  embedding: string[];
+
   @CreateDateColumn()
   createdAt: Date;
 

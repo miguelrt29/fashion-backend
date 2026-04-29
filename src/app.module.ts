@@ -42,17 +42,29 @@ import { Coupon } from './coupons/coupon.entity';
         username: config.get('DB_USERNAME'),
         password: config.get('DB_PASSWORD'),
         database: config.get('DB_NAME'),
-        entities: [User, Address, Product, Order, CartItem, Favorite, Review, NewsletterSubscriber, Coupon],
+        entities: [
+          User,
+          Address,
+          Product,
+          Order,
+          CartItem,
+          Favorite,
+          Review,
+          NewsletterSubscriber,
+          Coupon,
+        ],
         synchronize: config.get('NODE_ENV') !== 'production',
         logging: config.get('NODE_ENV') === 'development',
       }),
       inject: [ConfigService],
     }),
 
-    ThrottlerModule.forRoot([{
-      ttl: 60000,
-      limit: 100,
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000,
+        limit: 100,
+      },
+    ]),
 
     AuthModule,
     UsersModule,

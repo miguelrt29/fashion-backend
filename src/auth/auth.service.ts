@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
@@ -16,7 +21,12 @@ export class AuthService {
     private mailService: MailService,
   ) {}
 
-  async register(email: string, password: string, firstName: string, lastName: string) {
+  async register(
+    email: string,
+    password: string,
+    firstName: string,
+    lastName: string,
+  ) {
     const exists = await this.userRepository.findOne({ where: { email } });
     if (exists) throw new ConflictException('El email ya está registrado');
 
@@ -31,14 +41,28 @@ export class AuthService {
 
     await this.userRepository.save(user);
 
-    this.mailService.sendWelcomeEmail({
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-    }).catch(err => console.error('Error sending welcome email:', err.message));
+    this.mailService
+      .sendWelcomeEmail({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+      })
+      .catch((err) =>
+        console.error('Error sending welcome email:', err.message),
+      );
 
-    const { password: _, ...result } = user;
-    return result;
+    const payload = {
+      sub: user.id,
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
+    const token = this.jwtService.sign(payload);
+
+    const { password: _, ...userData } = user;
+    return { access_token: token, user: userData };
   }
 
   async login(email: string, password: string) {
@@ -48,7 +72,14 @@ export class AuthService {
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) throw new UnauthorizedException('Credenciales incorrectas');
 
-    const payload = { sub: user.id, userId: user.id, email: user.email, role: user.role };
+    const payload = {
+      sub: user.id,
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+    };
     const token = this.jwtService.sign(payload);
 
     const { password: _, ...userData } = user;
@@ -67,9 +98,12 @@ export class AuthService {
     console.log('=== forgotPassword iniciado ===');
     const user = await this.userRepository.findOne({ where: { email } });
     console.log('Usuario encontrado:', user ? user.email : 'NO ENCONTRADO');
-    
+
     if (!user) {
-      return { message: 'Si el email existe, recibirás un enlace para recuperar tu contraseña' };
+      return {
+        message:
+          'Si el email existe, recibirás un enlace para recuperar tu contraseña',
+      };
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
@@ -84,17 +118,23 @@ export class AuthService {
 
     console.log('Enviando email de recuperación...');
     try {
-      await this.mailService.sendPasswordResetEmail({
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-      }, resetToken);
+      await this.mailService.sendPasswordResetEmail(
+        {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+        },
+        resetToken,
+      );
       console.log('Email de recuperación ENVIADO');
     } catch (err) {
       console.error('Error enviando reset email:', err.message);
     }
 
-    return { message: 'Si el email existe, recibirás un enlace para recuperar tu contraseña' };
+    return {
+      message:
+        'Si el email existe, recibirás un enlace para recuperar tu contraseña',
+    };
   }
 
   async resetPassword(token: string, newPassword: string) {

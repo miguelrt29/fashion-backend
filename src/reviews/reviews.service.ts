@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Review } from './review.entity';
@@ -68,8 +72,10 @@ export class ReviewsService {
     }
 
     review.rating = updateReviewDto.rating;
-    if (updateReviewDto.title !== undefined) review.title = updateReviewDto.title;
-    if (updateReviewDto.comment !== undefined) review.comment = updateReviewDto.comment;
+    if (updateReviewDto.title !== undefined)
+      review.title = updateReviewDto.title;
+    if (updateReviewDto.comment !== undefined)
+      review.comment = updateReviewDto.comment;
 
     return this.reviewsRepository.save(review);
   }
@@ -88,19 +94,28 @@ export class ReviewsService {
   async getProductRating(productId: string): Promise<{
     average: number;
     count: number;
+    distribution: number[];
   }> {
     const reviews = await this.reviewsRepository.find({
       where: { productId, isApproved: true },
     });
 
+    const distribution = [0, 0, 0, 0, 0];
+    reviews.forEach(review => {
+      if (review.rating >= 1 && review.rating <= 5) {
+        distribution[review.rating - 1]++;
+      }
+    });
+
     if (reviews.length === 0) {
-      return { average: 0, count: 0 };
+      return { average: 0, count: 0, distribution };
     }
 
     const total = reviews.reduce((sum, review) => sum + review.rating, 0);
     return {
       average: total / reviews.length,
       count: reviews.length,
+      distribution,
     };
   }
 

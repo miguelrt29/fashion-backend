@@ -21,7 +21,9 @@ import { MailService } from './mail.service';
           },
         },
         defaults: {
-          from: configService.get('MAIL_FROM') || 'FashionStore <noreply@fashionstore.com>',
+          from:
+            configService.get('MAIL_FROM') ||
+            'FashionStore <noreply@fashionstore.com>',
         },
       }),
     }),

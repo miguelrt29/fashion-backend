@@ -1,0 +1,39 @@
+{
+  "store": {
+    "name": "FashionStore",
+    "email": "soporte@fashionstore.com",
+    "phone": "No disponible",
+    "hours": "Lunes a viernes 8am-6pm, sábados 9am-2pm",
+    "location": "Bogotá, Colombia"
+  },
+  "shipping": {
+    "cost": 15000,
+    "free_shipping_min": 150000,
+    "time_bogota": "3-5 días hábiles",
+    "time_other_cities": "5-7 días hábiles",
+    "coverage": "Toda Colombia",
+    "carriers": ["Servientrega", "Coordinadora", "Deprisa"]
+  },
+  "warranty": {
+    "duration_days": 30,
+    "covers": "Defectos de fábrica. No cubre daños por uso inadecuado.",
+    "process": "Escribe a soporte@fashionstore.com con tu factura y fotos del defecto."
+  },
+  "returns": {
+    "period_days": 15,
+    "conditions": "Producto sin uso, con etiquetas y empaque original.",
+    "return_shipping_pays": "El cliente paga el envío de devolución",
+    "process": "Contacta a soporte@fashionstore.com para iniciar el proceso."
+  },
+  "payment_methods": {
+    "stripe": "Tarjetas de débito/crédito. Hasta 3 cuotas sin interés.",
+    "mercadopago": "Transferencia bancaria inmediata.",
+    "cash_on_delivery": "Solo Bogotá, pago en efectivo al recibir."
+  },
+  "current_offers": "Envío gratis en compras superiores a $150,000 COP. Descuentos hasta 30% en vestidos y accesorios.",
+  "faq": [
+    {"question": "¿Cómo sé mi talla?", "answer": "Usa nuestra Guía de Tallas. Las medidas están en cada producto."},
+    {"question": "¿Puedo cambiar un producto?", "answer": "Sí, tienes 15 días para cambios. El producto debe estar sin uso."},
+    {"question": "¿Hacen envíos al exterior?", "answer": "Por ahora solo realizamos envíos dentro de Colombia."}
+  ]
+}

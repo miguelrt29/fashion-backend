@@ -28,7 +28,10 @@ export class FavoritesController {
     @Param('productId') productId: string,
   ) {
     const userId = req.user.userId || req.user.sub;
-    const isFavorite = await this.favoritesService.checkIsFavorite(userId, productId);
+    const isFavorite = await this.favoritesService.checkIsFavorite(
+      userId,
+      productId,
+    );
     return { isFavorite };
   }
 

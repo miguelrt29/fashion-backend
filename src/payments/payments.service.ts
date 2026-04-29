@@ -17,13 +17,14 @@ export class PaymentsService {
     private configService: ConfigService,
     private ordersService: OrdersService,
   ) {
-    this.stripeSecretKey = this.configService.get<string>('STRIPE_SECRET_KEY') || '';
-    this.stripeWebhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET') || '';
+    this.stripeSecretKey =
+      this.configService.get<string>('STRIPE_SECRET_KEY') || '';
+    this.stripeWebhookSecret =
+      this.configService.get<string>('STRIPE_WEBHOOK_SECRET') || '';
     this.mercadopagoAccessToken =
       this.configService.get<string>('MERCADOPAGO_ACCESS_TOKEN') || '';
-    this.mercadopagoWebhookSecret = this.configService.get<string>(
-      'MERCADOPAGO_WEBHOOK_SECRET',
-    ) || '';
+    this.mercadopagoWebhookSecret =
+      this.configService.get<string>('MERCADOPAGO_WEBHOOK_SECRET') || '';
   }
 
   private getStripe() {
@@ -147,7 +148,10 @@ export class PaymentsService {
       case 'checkout.session.completed':
         const session = event.data.object;
         if (session.metadata?.orderId) {
-          await this.ordersService.updateStatus(session.metadata.orderId, 'confirmed');
+          await this.ordersService.updateStatus(
+            session.metadata.orderId,
+            'confirmed',
+          );
         }
         break;
       case 'payment_intent.payment_failed':

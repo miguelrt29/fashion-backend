@@ -7,6 +7,10 @@ export class VisualSearchDto {
   @IsOptional()
   @IsString()
   textFilter?: string;
+
+  @IsOptional()
+  @IsString()
+  userMessage?: string;
 }
 
 export class VisualSearchResultItemDto {

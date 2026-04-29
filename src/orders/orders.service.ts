@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Order } from './order.entity';
@@ -63,7 +68,10 @@ export class OrdersService {
     return order;
   }
 
-  async getTracking(id: string, userId: string): Promise<{
+  async getTracking(
+    id: string,
+    userId: string,
+  ): Promise<{
     orderId: string;
     status: string;
     trackingNumber: string;

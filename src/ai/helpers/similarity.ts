@@ -26,7 +26,7 @@ export function cosineSimilarity(vecA: number[], vecB: number[]): number {
 export function normalizeVector(vec: number[]): number[] {
   const norm = Math.sqrt(vec.reduce((sum, val) => sum + val * val, 0));
   if (norm === 0) return vec;
-  return vec.map(val => val / norm);
+  return vec.map((val) => val / norm);
 }
 
 export function batchCosineSimilarity(

@@ -17,7 +17,8 @@ const products = [
   // MUJER - VESTIDOS
   {
     name: 'Vestido Midi Floral',
-    description: 'Vestido corto con estampado floral refinado. Perfecto para ocasiones especiales.',
+    description:
+      'Vestido corto con estampado floral refinado. Perfecto para ocasiones especiales.',
     price: 289000,
     stock: 18,
     category: 'vestidos',
@@ -25,13 +26,16 @@ const products = [
     brand: 'Elegance',
     sizes: ['XS', 'S', 'M', 'L'],
     colors: ['floral rosa', 'floral azul'],
-    images: ['https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&q=80',
+    ],
     discount: 10,
     isActive: true,
   },
   {
     name: 'Vestido Evening Negro',
-    description: 'Vestido de noche clasico. Sofisticacion absoluta para eventos formales.',
+    description:
+      'Vestido de noche clasico. Sofisticacion absoluta para eventos formales.',
     price: 350000,
     stock: 12,
     category: 'vestidos',
@@ -39,13 +43,16 @@ const products = [
     brand: 'LuxuryCouture',
     sizes: ['XS', 'S', 'M', 'L', 'XL'],
     colors: ['negro'],
-    images: ['https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=600&q=80',
+    ],
     discount: 0,
     isActive: true,
   },
   {
     name: 'Vestido Summer Amarillo',
-    description: 'Vestido ligero de verano en amarillo. Frescura y estilo playero.',
+    description:
+      'Vestido ligero de verano en amarillo. Frescura y estilo playero.',
     price: 219000,
     stock: 22,
     category: 'vestidos',
@@ -53,7 +60,9 @@ const products = [
     brand: 'SunStyle',
     sizes: ['S', 'M', 'L'],
     colors: ['amarillo', 'coral', 'blanco'],
-    images: ['https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=600&q=80',
+    ],
     discount: 0,
     isActive: true,
   },
@@ -67,7 +76,9 @@ const products = [
     brand: 'OfficeWear',
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['beige', 'negro'],
-    images: ['https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=600&q=80',
+    ],
     discount: 20,
     isActive: true,
   },
@@ -82,7 +93,9 @@ const products = [
     brand: 'DenimCo',
     sizes: ['26', '28', '30', '32', '34'],
     colors: ['negro'],
-    images: ['https://images.unsplash.com/photo-1542272604-787c3835535d?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1542272604-787c3835535d?w=600&q=80',
+    ],
     discount: 0,
     isActive: true,
   },
@@ -96,14 +109,17 @@ const products = [
     brand: 'OutdoorPro',
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['verde militar', 'negro', 'caqui'],
-    images: ['https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&q=80',
+    ],
     discount: 15,
     isActive: true,
   },
   // MUJER - ZAPATOS
   {
     name: 'Zapatillas Urban Blancas',
-    description: 'Zapatillas urbanas clasicas en blanco. Versatilidad y estilo.',
+    description:
+      'Zapatillas urbanas clasicas en blanco. Versatilidad y estilo.',
     price: 195000,
     stock: 30,
     category: 'zapatos',
@@ -111,7 +127,9 @@ const products = [
     brand: 'UrbanStyle',
     sizes: ['35', '36', '37', '38', '39', '40'],
     colors: ['blanco', 'negro'],
-    images: ['https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1560769629-975ec94e6a86?w=600&q=80',
+    ],
     discount: 0,
     isActive: true,
   },
@@ -126,7 +144,9 @@ const products = [
     brand: 'Elegance',
     sizes: ['XS', 'S', 'M', 'L'],
     colors: ['rosa', 'blanco', 'negro'],
-    images: ['https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600&q=80',
+    ],
     discount: 10,
     isActive: true,
   },
@@ -141,7 +161,9 @@ const products = [
     brand: 'StreetWear',
     sizes: ['M', 'L', 'XL', 'XXL'],
     colors: ['gris', 'negro'],
-    images: ['https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=600&q=80',
+    ],
     discount: 0,
     isActive: true,
   },
@@ -155,7 +177,9 @@ const products = [
     brand: 'UrbanStyle',
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['negro', 'blanco'],
-    images: ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=600&q=80',
+    ],
     discount: 0,
     isActive: true,
   },
@@ -170,7 +194,9 @@ const products = [
     brand: 'OfficeWear',
     sizes: ['S', 'M', 'L', 'XL', 'XXL'],
     colors: ['blanco', 'azul claro'],
-    images: ['https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1596755094514-f87e34085b2c?w=600&q=80',
+    ],
     discount: 15,
     isActive: true,
   },
@@ -184,7 +210,9 @@ const products = [
     brand: 'DenimCo',
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['azul claro', 'azul indigo'],
-    images: ['https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80',
+    ],
     discount: 0,
     isActive: true,
   },
@@ -199,7 +227,9 @@ const products = [
     brand: 'DenimCo',
     sizes: ['28', '30', '32', '34', '36'],
     colors: ['azul indigo', 'azul oscuro'],
-    images: ['https://images.unsplash.com/photo-1542272604-787c3835535d?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1542272604-787c3835535d?w=600&q=80',
+    ],
     discount: 20,
     isActive: true,
   },
@@ -213,7 +243,9 @@ const products = [
     brand: 'OfficeWear',
     sizes: ['30', '32', '34', '36', '38'],
     colors: ['negro', 'gris oscuro'],
-    images: ['https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?w=600&q=80',
+    ],
     discount: 0,
     isActive: true,
   },
@@ -228,7 +260,9 @@ const products = [
     brand: 'RebelWear',
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['negro'],
-    images: ['https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?w=600&q=80',
+    ],
     discount: 0,
     isActive: true,
   },
@@ -242,7 +276,9 @@ const products = [
     brand: 'DenimCo',
     sizes: ['S', 'M', 'L', 'XL'],
     colors: ['azul claro', 'azul indigo'],
-    images: ['https://images.unsplash.com/photo-1548126032-079a0fb0099d?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1548126032-079a0fb0099d?w=600&q=80',
+    ],
     discount: 15,
     isActive: true,
   },
@@ -256,7 +292,9 @@ const products = [
     brand: 'StreetWear',
     sizes: ['M', 'L', 'XL', 'XXL'],
     colors: ['verde militar', 'negro'],
-    images: ['https://images.unsplash.com/photo-1548126032-079a0fb0099d?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1548126032-079a0fb0099d?w=600&q=80',
+    ],
     discount: 0,
     isActive: true,
   },
@@ -271,7 +309,9 @@ const products = [
     brand: 'SpeedRun',
     sizes: ['38', '39', '40', '41', '42', '43', '44'],
     colors: ['negro', 'blanco', 'gris'],
-    images: ['https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=600&q=80',
+    ],
     discount: 10,
     isActive: true,
   },
@@ -285,7 +325,9 @@ const products = [
     brand: 'UrbanStyle',
     sizes: ['39', '40', '41', '42', '43', '44'],
     colors: ['marron', 'negro'],
-    images: ['https://images.unsplash.com/photo-1542280756-74b2f55e73ab?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1542280756-74b2f55e73ab?w=600&q=80',
+    ],
     discount: 0,
     isActive: true,
   },
@@ -300,7 +342,9 @@ const products = [
     brand: 'LuxeBags',
     sizes: ['Unica'],
     colors: ['marron', 'negro', 'beige'],
-    images: ['https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=600&q=80',
+    ],
     discount: 0,
     isActive: true,
   },
@@ -314,7 +358,9 @@ const products = [
     brand: 'StreetWear',
     sizes: ['Unica'],
     colors: ['negro', 'azul', 'rojo'],
-    images: ['https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600&q=80'],
+    images: [
+      'https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=600&q=80',
+    ],
     discount: 0,
     isActive: true,
   },
@@ -322,18 +368,20 @@ const products = [
 
 async function seed() {
   console.log('Conectando a la base de datos...');
-  
+
   await AppDataSource.initialize();
   console.log('Conexion establecida\n');
 
   const repo = AppDataSource.getRepository(Product);
-  
+
   const count = await repo.count();
   if (count > 0) {
     console.log(`Ya existen ${count} productos en la base de datos.`);
     const confirm = process.env.SEED_OVERWRITE || 'n';
     if (confirm.toLowerCase() !== 'y') {
-      console.log('Seed cancelado. Establece SEED_OVERWRITE=y para reemplazar.');
+      console.log(
+        'Seed cancelado. Establece SEED_OVERWRITE=y para reemplazar.',
+      );
       process.exit(0);
     }
     await repo.clear();
@@ -350,8 +398,12 @@ async function seed() {
 
   console.log(`\nSeed completado: ${products.length} productos insertados`);
   console.log('\nDistribución:');
-  console.log(`  Mujer: ${products.filter(p => p.gender === 'mujer').length} productos`);
-  console.log(`  Hombre: ${products.filter(p => p.gender === 'hombre').length} productos`);
+  console.log(
+    `  Mujer: ${products.filter((p) => p.gender === 'mujer').length} productos`,
+  );
+  console.log(
+    `  Hombre: ${products.filter((p) => p.gender === 'hombre').length} productos`,
+  );
 
   await AppDataSource.destroy();
   process.exit(0);

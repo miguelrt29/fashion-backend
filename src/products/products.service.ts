@@ -5,13 +5,27 @@ import { Product } from './product.entity';
 
 @Injectable()
 export class ProductsService {
+  private readonly backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
+
   constructor(
     @InjectRepository(Product)
     private productRepository: Repository<Product>,
   ) {}
 
+  private normalizeImages(images: string[]): string[] {
+    return (images || []).map(img => {
+      if (!img) return '';
+      if (img.startsWith('http://') || img.startsWith('https://')) {
+        return img;
+      }
+      const cleanPath = img.startsWith('/') ? img : `/${img}`;
+      return `${this.backendUrl}${cleanPath}`;
+    }).filter(Boolean);
+  }
+
   async findAll(gender?: string, category?: string, search?: string) {
-    const query = this.productRepository.createQueryBuilder('product')
+    const query = this.productRepository
+      .createQueryBuilder('product')
       .where('product.isActive = :isActive', { isActive: true });
 
     if (gender) {
@@ -29,18 +43,29 @@ export class ProductsService {
       );
     }
 
-    return query.orderBy('product.createdAt', 'DESC').getMany();
+    const products = await query.orderBy('product.createdAt', 'DESC').getMany();
+    return products.map(p => ({
+      ...p,
+      images: this.normalizeImages(p.images),
+    }));
   }
 
   async findOne(id: string) {
     const product = await this.productRepository.findOne({ where: { id } });
     if (!product) throw new NotFoundException('Producto no encontrado');
-    return product;
+    return {
+      ...product,
+      images: this.normalizeImages(product.images),
+    };
   }
 
   async create(data: Partial<Product>) {
     const product = this.productRepository.create(data);
-    return this.productRepository.save(product);
+    const saved = await this.productRepository.save(product);
+    return {
+      ...saved,
+      images: this.normalizeImages(saved.images),
+    };
   }
 
   async update(id: string, data: Partial<Product>) {

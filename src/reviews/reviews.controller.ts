@@ -11,10 +11,14 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ReviewsService } from './reviews.service';
+import { UsersService } from '../users/users.service';
 
 @Controller('reviews')
 export class ReviewsController {
-  constructor(private readonly reviewsService: ReviewsService) {}
+  constructor(
+    private readonly reviewsService: ReviewsService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Get('product/:productId')
   async getProductReviews(@Param('productId') productId: string) {
@@ -44,9 +48,14 @@ export class ReviewsController {
       comment?: string;
     },
   ) {
+    const userId = req.user.userId;
+    const user = await this.usersService.findById(userId);
+    const userName = user.firstName && user.lastName
+      ? `${user.firstName} ${user.lastName}`.trim()
+      : user.firstName || user.lastName || 'Usuario';
     return this.reviewsService.create(
-      req.user.userId,
-      req.user.user?.firstName || 'Anonymous',
+      userId,
+      userName,
       createReviewDto,
     );
   }
@@ -63,7 +72,11 @@ export class ReviewsController {
       comment?: string;
     },
   ) {
-    return this.reviewsService.update(reviewId, req.user.userId, updateReviewDto);
+    return this.reviewsService.update(
+      reviewId,
+      req.user.userId,
+      updateReviewDto,
+    );
   }
 
   @Delete(':reviewId')

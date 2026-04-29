@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
 import { Coupon } from './coupon.entity';
@@ -10,18 +15,16 @@ export class CouponsService {
     private couponsRepository: Repository<Coupon>,
   ) {}
 
-  async create(
-    createCouponDto: {
-      code: string;
-      type: 'percentage' | 'fixed';
-      value: number;
-      minPurchase?: number;
-      maxDiscount?: number;
-      expiresAt?: Date;
-      usageLimit?: number;
-      applicableCategories?: string[];
-    },
-  ): Promise<Coupon> {
+  async create(createCouponDto: {
+    code: string;
+    type: 'percentage' | 'fixed';
+    value: number;
+    minPurchase?: number;
+    maxDiscount?: number;
+    expiresAt?: Date;
+    usageLimit?: number;
+    applicableCategories?: string[];
+  }): Promise<Coupon> {
     const { code, ...rest } = createCouponDto;
     const coupon = this.couponsRepository.create({
       code: code.toUpperCase(),
@@ -52,7 +55,11 @@ export class CouponsService {
     }
 
     if (coupon.usedCount >= coupon.usageLimit) {
-      return { valid: false, discount: 0, message: 'Coupon usage limit reached' };
+      return {
+        valid: false,
+        discount: 0,
+        message: 'Coupon usage limit reached',
+      };
     }
 
     if (coupon.minPurchase && cartTotal < coupon.minPurchase) {
@@ -69,7 +76,11 @@ export class CouponsService {
       category &&
       !coupon.applicableCategories.includes(category)
     ) {
-      return { valid: false, discount: 0, message: 'Coupon not applicable to this category' };
+      return {
+        valid: false,
+        discount: 0,
+        message: 'Coupon not applicable to this category',
+      };
     }
 
     let discount = 0;

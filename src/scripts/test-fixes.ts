@@ -14,22 +14,22 @@ async function testFixes() {
 
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${token}`
+    Authorization: `Bearer ${token}`,
   };
 
   // Test 1: Perfil - Actualizar teléfono
   console.log('1. TEST: Actualizar teléfono del perfil');
   const profileRes = await fetch(`${BASE_URL}/users/profile`, { headers });
   const profile = await profileRes.json();
-  console.log('   Perfil actual:', { 
-    firstName: profile.firstName, 
-    phone: profile.phone || 'sin teléfono' 
+  console.log('   Perfil actual:', {
+    firstName: profile.firstName,
+    phone: profile.phone || 'sin teléfono',
   });
 
   const updateRes = await fetch(`${BASE_URL}/users/profile`, {
     method: 'PUT',
     headers,
-    body: JSON.stringify({ phone: '3001234567' })
+    body: JSON.stringify({ phone: '3001234567' }),
   });
   if (updateRes.ok) {
     const updated = await updateRes.json();
@@ -40,7 +40,7 @@ async function testFixes() {
 
   // Test 2: Direcciones
   console.log('\n2. TEST: CRUD de direcciones');
-  
+
   // Crear dirección
   const addressRes = await fetch(`${BASE_URL}/users/addresses`, {
     method: 'POST',
@@ -53,37 +53,45 @@ async function testFixes() {
       postalCode: '110111',
       country: 'Colombia',
       phone: '3001234567',
-      isDefault: true
-    })
+      isDefault: true,
+    }),
   });
-  
+
   if (addressRes.ok) {
     const address = await addressRes.json();
     console.log('   ✅ Dirección creada:', address.id);
     console.log('   Label:', address.label, '| Phone:', address.phone);
 
     // Actualizar dirección
-    const updateAddrRes = await fetch(`${BASE_URL}/users/addresses/${address.id}`, {
-      method: 'PUT',
-      headers,
-      body: JSON.stringify({ 
-        street: 'Carrera 15 #78-90',
-        phone: '3209876543'
-      })
-    });
-    
+    const updateAddrRes = await fetch(
+      `${BASE_URL}/users/addresses/${address.id}`,
+      {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({
+          street: 'Carrera 15 #78-90',
+          phone: '3209876543',
+        }),
+      },
+    );
+
     if (updateAddrRes.ok) {
       const updatedAddr = await updateAddrRes.json();
       console.log('   ✅ Dirección actualizada');
-      console.log('   Nueva calle:', updatedAddr.street, '| Teléfono:', updatedAddr.phone);
+      console.log(
+        '   Nueva calle:',
+        updatedAddr.street,
+        '| Teléfono:',
+        updatedAddr.phone,
+      );
     }
 
     // Eliminar dirección
     const deleteRes = await fetch(`${BASE_URL}/users/addresses/${address.id}`, {
       method: 'DELETE',
-      headers
+      headers,
     });
-    
+
     if (deleteRes.ok) {
       console.log('   ✅ Dirección eliminada');
     }
@@ -98,7 +106,9 @@ async function testFixes() {
     const addresses = await listRes.json();
     console.log('   ✅ Direcciones del usuario:', addresses.length);
     addresses.forEach((a: any, i: number) => {
-      console.log(`   ${i+1}. ${a.label} - ${a.street} (${a.phone || 'sin tel'})`);
+      console.log(
+        `   ${i + 1}. ${a.label} - ${a.street} (${a.phone || 'sin tel'})`,
+      );
     });
   }
 
@@ -109,10 +119,14 @@ async function testFixes() {
 
   console.log('\n=== TESTS COMPLETADOS ===');
   console.log('\n📋 RESUMEN DE ARREGLOS:');
-  console.log('1. Pasarela de pagos: Mejorado manejo de errores - ahora muestra');
+  console.log(
+    '1. Pasarela de pagos: Mejorado manejo de errores - ahora muestra',
+  );
   console.log('   error cuando falla Stripe/MercadoPago en vez de continuar');
   console.log('2. Direcciones: El campo "label" ahora se guarda correctamente');
-  console.log('3. Teléfono: Ahora se guarda tanto en perfil como en direcciones');
+  console.log(
+    '3. Teléfono: Ahora se guarda tanto en perfil como en direcciones',
+  );
   console.log('\n⚠️  NOTA: Para que funcione la pasarela de pagos, necesitas:');
   console.log('   - Configurar STRIPE_SECRET_KEY real en .env');
   console.log('   - Configurar MERCADOPAGO_ACCESS_TOKEN real en .env');

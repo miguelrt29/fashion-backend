@@ -6,6 +6,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
+import * as express from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -20,13 +21,16 @@ async function bootstrap() {
     credentials: true,
   });
 
+  // Servir archivos estáticos (imágenes)
+  app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+
   // Seguridad: Validación global de todos los datos entrantes
   // Rechaza cualquier campo no permitido en los DTOs
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,        // Elimina campos no declarados en el DTO
+      whitelist: true, // Elimina campos no declarados en el DTO
       forbidNonWhitelisted: true, // Lanza error si llegan campos extra
-      transform: true,        // Convierte tipos automáticamente
+      transform: true, // Convierte tipos automáticamente
     }),
   );
 
@@ -35,7 +39,9 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  console.log(`🚀 Fashion Store API corriendo en: http://localhost:${port}/api`);
+  console.log(
+    `🚀 Fashion Store API corriendo en: http://localhost:${port}/api`,
+  );
 }
 
 bootstrap();
