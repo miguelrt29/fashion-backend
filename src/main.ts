@@ -41,6 +41,11 @@ async function bootstrap() {
   // Prefijo global para todas las rutas: /api/productos, /api/usuarios, etc.
   app.setGlobalPrefix('api');
 
+  // Health check en la raíz (sin prefijo /api)
+  app.getHttpAdapter().get('/', (_req, res) => {
+    res.json({ message: 'Fashion Backend API is running', status: 'ok' });
+  });
+
   const port = process.env.PORT || 3000;
   await app.listen(port);
   console.log(
