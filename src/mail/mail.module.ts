@@ -10,11 +10,14 @@ import { MailService } from './mail.service';
       useFactory: (configService: ConfigService) => {
         const user = configService.get('MAIL_USER');
         const pass = configService.get('MAIL_PASS');
+        const port = parseInt(configService.get('MAIL_PORT') || '587');
         const transport: any = {
           host: configService.get('MAIL_HOST') || 'smtp.gmail.com',
-          port: parseInt(configService.get('MAIL_PORT') || '587'),
-          secure: false,
+          port,
+          secure: port === 465,
           tls: { rejectUnauthorized: false },
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
         };
         if (user && pass) {
           transport.auth = { user, pass };
