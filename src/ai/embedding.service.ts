@@ -8,13 +8,17 @@ export class EmbeddingService {
   private readonly logger = new Logger(EmbeddingService.name);
   private readonly apiKey: string;
   private readonly viModel = 'openai/clip-vit-base-patch32';
-  private readonly hfFeatureExtractionUrl = 'https://api-inference.huggingface.co/pipeline/feature-extraction';
+  private readonly hfFeatureExtractionUrl =
+    'https://api-inference.huggingface.co/pipeline/feature-extraction';
 
   constructor(
     private httpService: HttpService,
     private configService: ConfigService,
   ) {
-    this.apiKey = this.configService.get<string>('HUGGING_FACE_API_KEY') || process.env['HUGGING_FACE_API_KEY'] || '';
+    this.apiKey =
+      this.configService.get<string>('HUGGING_FACE_API_KEY') ||
+      process.env['HUGGING_FACE_API_KEY'] ||
+      '';
   }
 
   async getImageEmbedding(imageBase64: string): Promise<number[]> {
@@ -22,16 +26,18 @@ export class EmbeddingService {
 
     try {
       const response = await firstValueFrom(
-        this.httpService.post(
-          `${this.hfFeatureExtractionUrl}/${this.viModel}`,
-          { inputs: base64Data },
-          {
-            headers: {
-              Authorization: `Bearer ${this.apiKey}`,
-              'Content-Type': 'application/json',
+        this.httpService
+          .post(
+            `${this.hfFeatureExtractionUrl}/${this.viModel}`,
+            { inputs: base64Data },
+            {
+              headers: {
+                Authorization: `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json',
+              },
             },
-          },
-        ).pipe(timeout(8000)),
+          )
+          .pipe(timeout(8000)),
       );
 
       const data = response.data;
@@ -45,7 +51,10 @@ export class EmbeddingService {
 
       throw new Error('Invalid embedding response');
     } catch (error) {
-      this.logger.error('Error getting image embedding:', error.response?.data || error.message);
+      this.logger.error(
+        'Error getting image embedding:',
+        error.response?.data || error.message,
+      );
       throw error;
     }
   }
@@ -55,27 +64,34 @@ export class EmbeddingService {
 
     try {
       const response = await firstValueFrom(
-        this.httpService.post(
-          'https://router.huggingface.co/models/google/vit-base-patch16-224',
-          { inputs: base64Data },
-          {
-            headers: {
-              Authorization: `Bearer ${this.apiKey}`,
-              'Content-Type': 'application/json',
+        this.httpService
+          .post(
+            'https://router.huggingface.co/models/google/vit-base-patch16-224',
+            { inputs: base64Data },
+            {
+              headers: {
+                Authorization: `Bearer ${this.apiKey}`,
+                'Content-Type': 'application/json',
+              },
             },
-          },
-        ).pipe(timeout(8000)),
+          )
+          .pipe(timeout(8000)),
       );
 
       const data = response.data;
 
       if (Array.isArray(data) && data.length > 0) {
-        return data.slice(0, 5).map((item: any) => item.label?.toLowerCase() || '');
+        return data
+          .slice(0, 5)
+          .map((item: any) => item.label?.toLowerCase() || '');
       }
 
       return [];
     } catch (error) {
-      this.logger.error('Error getting classification:', error.response?.data || error.message);
+      this.logger.error(
+        'Error getting classification:',
+        error.response?.data || error.message,
+      );
       return [];
     }
   }

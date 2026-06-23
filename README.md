@@ -1,98 +1,177 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Fashion Store - E-commerce de Moda
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## Descripcion
+Fashion Store es una plataforma de comercio electronico de moda que permite a los usuarios explorar, buscar y comprar productos de ropa, calzado y accesorios. Cuenta con un backend robusto en NestJS y un frontend moderno en Angular 21, ademas de un asistente virtual impulsado por IA para mejorar la experiencia del cliente.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Tecnologias Utilizadas
+### Backend
+- NestJS (Framework Node.js)
+- PostgreSQL (Base de datos relacional)
+- HuggingFace API (Modelo de lenguaje meta-llama/Llama-3.2-1B-Instruct)
+- TypeScript
+- Jest (Pruebas unitarias)
 
-## Description
+### Frontend
+- Angular 21
+- TypeScript
+- HTML/CSS
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
-
-```bash
-$ npm install
+## Estructura del Proyecto
+```
+fashion-store/
+├── README.md                # Este archivo
+├── backend/
+│   └── fashion-backend/     # Backend NestJS
+│       ├── src/
+│       │   ├── ai/          # Modulo de Inteligencia Artificial
+│       │   │   ├── ai.service.ts
+│       │   │   ├── ai.controller.ts
+│       │   │   ├── store-knowledge.json  # Base de conocimiento de la tienda
+│       │   │   ├── embedding.service.ts  # Servicio de embeddings para busqueda visual
+│       │   │   └── helpers/  # Funciones auxiliares (similitud de coseno)
+│       │   ├── auth/        # Modulo de autenticacion
+│       │   ├── products/    # Modulo de productos
+│       │   ├── cart/        # Modulo de carrito (pendiente)
+│       │   ├── favorites/   # Modulo de favoritos (pendiente)
+│       │   ├── orders/      # Modulo de pedidos
+│       │   └── users/       # Modulo de usuarios (pendiente)
+│       ├── .env             # Variables de entorno (no versionar)
+│       ├── package.json
+│       └── AGENTS.md        # Instrucciones para agentes de IA
+└── frontend/
+    └── fashion-frontend/    # Frontend Angular 21
+        ├── src/
+        │   ├── app/
+        │   │   ├── services/  # Servicios HTTP para consumir el backend
+        │   │   ├── pages/     # Paginas de la aplicacion
+        │   │   └── components/ # Componentes reutilizables
+        └── package.json
 ```
 
-## Compile and run the project
+## Requisitos Previos
+- Node.js (v18 o superior)
+- PostgreSQL (v14 o superior, configurado en localhost:5432)
+- Angular CLI (v21 o superior)
+- Cuenta en HuggingFace con API key para el modelo de IA
 
-```bash
-# development
-$ npm run start
+## Configuracion del Entorno
+### Backend
+1. Crear un archivo `.env` en `backend/fashion-backend/` con las siguientes variables (nunca subir al repositorio):
+```
+DATABASE_HOST=localhost
+DATABASE_PORT=5432
+DATABASE_USER=postgres
+DATABASE_PASSWORD=tu_contraseña
+DATABASE_NAME=fashion_store
+HUGGING_FACE_API_KEY=hf_tu_api_key_de_huggingface
+BACKEND_URL=http://localhost:3000
+JWT_SECRET=tu_secreto_jwt
+```
+2. Asegurarse de que la base de datos `fashion_store` exista en PostgreSQL.
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+### Frontend
+1. Configurar la URL del backend en `frontend/fashion-frontend/src/environments/environment.ts`:
+```typescript
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:3000/api'
+};
 ```
 
-## Run tests
-
+## Instalacion
+### Backend
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+cd backend/fashion-backend
+npm install
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
+### Frontend
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+cd frontend/fashion-frontend
+npm install
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Ejecucion del Proyecto
+### Backend (Modo desarrollo con hot-reload)
+```bash
+cd backend/fashion-backend
+npm run start:dev
+```
+El backend se ejecutara en `http://localhost:3000`.
 
-## Resources
+### Frontend
+```bash
+cd frontend/fashion-frontend
+ng serve
+```
+El frontend se ejecutara en `http://localhost:4200`.
 
-Check out a few resources that may come in handy when working with NestJS:
+## Endpoints del Backend (Activos)
+### Autenticacion
+- `POST /api/auth/register` - Registro de usuarios
+- `POST /api/auth/login` - Inicio de sesion
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Productos
+- `GET /api/products` - Listar todos los productos
+- `POST /api/products` - Crear producto (admin)
+- `PUT /api/products/:id` - Actualizar producto (admin)
+- `DELETE /api/products/:id` - Eliminar producto (admin)
 
-## Support
+### Inteligencia Artificial
+- `POST /api/ai/chat` - Chat con el asistente virtual
+- `POST /api/ai/recommendations` - Obtener recomendaciones de productos
+- `POST /api/ai/visual-search` - Busqueda visual de productos
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+## Asistente Virtual (Chatbot)
+Fashion Store cuenta con un asistente virtual que cumple con las siguientes reglas:
+- Responde saludos con texto plano cordial (sin JSON)
+- Proporciona informacion de la tienda usando `store-knowledge.json` (envios, garantias, devoluciones, pagos) en texto plano
+- Muestra productos en formato JSON estructurado al consultar el catalogo
+- No utiliza markdown, ** ni formatos innecesarios en sus respuestas
+- Soporta busqueda por texto y busqueda visual mediante embeddings
+- Responde siempre en espanol, maximo 2 oraciones
 
-## Stay in touch
+### Base de Conocimiento
+El archivo `src/ai/store-knowledge.json` contiene:
+- Informacion de contacto y horarios de atencion
+- Politicas de envio (costo $15,000 COP, gratis en compras superiores a $150,000 COP)
+- Garantia de 30 dias por defectos de fabrica
+- Periodo de devoluciones de 15 dias
+- Metodos de pago aceptados (Stripe, MercadoPago, Contraentrega)
+- Preguntas frecuentes (FAQ)
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Archivos Estáticos
+El backend sirve imagenes subidas en `http://localhost:3000/uploads`, utilizado para las imagenes de los productos.
 
-## License
+## Pruebas
+### Backend
+Ejecutar todas las pruebas:
+```bash
+cd backend/fashion-backend
+npm test
+```
+Ejecutar pruebas del servicio de IA (8 pruebas pasando):
+```bash
+npm test -- ai.service.spec.ts
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## Funcionalidades Pendientes (Backend)
+- Carrito de compras (Cart)
+- Favoritos (Favorites)
+- Reseñas de productos (Reviews)
+- Gestion de usuarios (Users)
+- Boletin de noticias (Newsletter)
+- Cupones de descuento (Coupons)
+
+## Reglas de Desarrollo
+- Todas las claves API deben estar en archivos `.env`, nunca en el codigo fuente
+- Todo el codigo, documentacion y respuestas de la IA deben estar en espanol
+- PostgreSQL se ejecuta en `localhost:5432` con base de datos `fashion_store`
+- No modificar los modulos: Cart, Favorites, Products, Users, Orders (salvo indicacion contraria)
+- No utilizar emojis en las respuestas de la IA ni en el codigo
+
+## Contribucion
+Si deseas contribuir, por favor sigue las reglas de desarrollo y crea un pull request con tus cambios detallando las modificaciones realizadas.
+
+## Licencia
+Este proyecto es de uso privado. Todos los derechos reservados.

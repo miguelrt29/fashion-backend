@@ -101,7 +101,7 @@ export class ReviewsService {
     });
 
     const distribution = [0, 0, 0, 0, 0];
-    reviews.forEach(review => {
+    reviews.forEach((review) => {
       if (review.rating >= 1 && review.rating <= 5) {
         distribution[review.rating - 1]++;
       }

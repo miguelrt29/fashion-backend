@@ -50,14 +50,11 @@ export class ReviewsController {
   ) {
     const userId = req.user.userId;
     const user = await this.usersService.findById(userId);
-    const userName = user.firstName && user.lastName
-      ? `${user.firstName} ${user.lastName}`.trim()
-      : user.firstName || user.lastName || 'Usuario';
-    return this.reviewsService.create(
-      userId,
-      userName,
-      createReviewDto,
-    );
+    const userName =
+      user.firstName && user.lastName
+        ? `${user.firstName} ${user.lastName}`.trim()
+        : user.firstName || user.lastName || 'Usuario';
+    return this.reviewsService.create(userId, userName, createReviewDto);
   }
 
   @Put(':reviewId')

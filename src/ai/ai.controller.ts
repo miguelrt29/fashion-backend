@@ -62,7 +62,10 @@ export class AiController {
     @Body() dto: VisualSearchDto,
   ): Promise<VisualSearchResponseDto> {
     try {
-      return await this.aiService.visualSearch(dto.imageBase64, dto.userMessage);
+      return await this.aiService.visualSearch(
+        dto.imageBase64,
+        dto.userMessage,
+      );
     } catch (error) {
       this.logger.error('Visual search error:', error.message);
       return { results: [] };

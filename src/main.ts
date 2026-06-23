@@ -6,6 +6,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import helmet from 'helmet';
+import compression from 'compression';
 import * as express from 'express';
 
 async function bootstrap() {
@@ -13,6 +14,9 @@ async function bootstrap() {
 
   // Seguridad: Headers HTTP protegidos
   app.use(helmet());
+
+  // Performance: Compresión de respuestas gzip
+  app.use(compression());
 
   // Seguridad: CORS - solo permite llamadas desde el frontend
   app.enableCors({
@@ -44,4 +48,4 @@ async function bootstrap() {
   );
 }
 
-bootstrap();
+void bootstrap();

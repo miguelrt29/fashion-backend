@@ -14,6 +14,7 @@ import {
   CreateStripePaymentDto,
   CreateMercadoPagoPaymentDto,
 } from './dto/payment.dto';
+import type { AuthenticatedRequest } from '../types/express';
 
 @Controller('payments')
 export class PaymentsController {
@@ -22,7 +23,7 @@ export class PaymentsController {
   @Post('stripe/create')
   @UseGuards(AuthGuard('jwt'))
   async createStripePayment(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Body() createPaymentDto: CreateStripePaymentDto,
   ) {
     return this.paymentsService.createStripeSession(
@@ -35,7 +36,7 @@ export class PaymentsController {
   @Post('mercadopago/create')
   @UseGuards(AuthGuard('jwt'))
   async createMercadoPagoPayment(
-    @Request() req,
+    @Request() req: AuthenticatedRequest,
     @Body() createPaymentDto: CreateMercadoPagoPaymentDto,
   ) {
     return this.paymentsService.createMercadoPagoPreference(

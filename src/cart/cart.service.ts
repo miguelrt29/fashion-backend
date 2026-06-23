@@ -5,7 +5,8 @@ import { CartItem } from './cart.entity';
 
 @Injectable()
 export class CartService {
-  private readonly backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
+  private readonly backendUrl =
+    process.env.BACKEND_URL || 'http://localhost:3000';
 
   constructor(
     @InjectRepository(CartItem)
@@ -26,7 +27,7 @@ export class CartService {
       where: { userId },
       order: { createdAt: 'DESC' },
     });
-    return items.map(item => ({
+    return items.map((item) => ({
       ...item,
       image: this.normalizeImage(item.image),
     }));

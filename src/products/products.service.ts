@@ -5,7 +5,8 @@ import { Product } from './product.entity';
 
 @Injectable()
 export class ProductsService {
-  private readonly backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
+  private readonly backendUrl =
+    process.env.BACKEND_URL || 'http://localhost:3000';
 
   constructor(
     @InjectRepository(Product)
@@ -13,14 +14,16 @@ export class ProductsService {
   ) {}
 
   private normalizeImages(images: string[]): string[] {
-    return (images || []).map(img => {
-      if (!img) return '';
-      if (img.startsWith('http://') || img.startsWith('https://')) {
-        return img;
-      }
-      const cleanPath = img.startsWith('/') ? img : `/${img}`;
-      return `${this.backendUrl}${cleanPath}`;
-    }).filter(Boolean);
+    return (images || [])
+      .map((img) => {
+        if (!img) return '';
+        if (img.startsWith('http://') || img.startsWith('https://')) {
+          return img;
+        }
+        const cleanPath = img.startsWith('/') ? img : `/${img}`;
+        return `${this.backendUrl}${cleanPath}`;
+      })
+      .filter(Boolean);
   }
 
   async findAll(gender?: string, category?: string, search?: string) {
@@ -44,7 +47,7 @@ export class ProductsService {
     }
 
     const products = await query.orderBy('product.createdAt', 'DESC').getMany();
-    return products.map(p => ({
+    return products.map((p) => ({
       ...p,
       images: this.normalizeImages(p.images),
     }));

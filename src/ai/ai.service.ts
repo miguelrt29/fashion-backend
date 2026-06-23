@@ -28,7 +28,7 @@ interface ProductInfo {
 
 const FALLBACK_RESPONSE = {
   text: 'Lo siento, tuve un problema. ¿Podrías intentar de nuevo?',
-  products: []
+  products: [],
 };
 
 const HF_TIMEOUT = 10000;
@@ -37,13 +37,15 @@ const HF_TIMEOUT = 10000;
 export class AiService {
   private readonly logger = new Logger(AiService.name);
   private readonly apiKey: string;
-  private readonly hfRouterUrl = 'https://router.huggingface.co/v1/chat/completions';
+  private readonly hfRouterUrl =
+    'https://router.huggingface.co/v1/chat/completions';
 
   private readonly chatHistories: Map<string, ChatMessage[]> = new Map();
   private productsCache: ProductInfo[] = [];
   private lastCacheTime = 0;
   private readonly CACHE_TTL_MS = 5 * 60 * 1000;
-  private readonly backendUrl = process.env.BACKEND_URL || 'http://localhost:3000';
+  private readonly backendUrl =
+    process.env.BACKEND_URL || 'http://localhost:3000';
 
   private storeKnowledge: any = null;
 
@@ -53,7 +55,10 @@ export class AiService {
     private productsService: ProductsService,
     private embeddingService: EmbeddingService,
   ) {
-    this.apiKey = this.configService.get<string>('HUGGING_FACE_API_KEY') || process.env['HUGGING_FACE_API_KEY'] || '';
+    this.apiKey =
+      this.configService.get<string>('HUGGING_FACE_API_KEY') ||
+      process.env['HUGGING_FACE_API_KEY'] ||
+      '';
   }
 
   private loadStoreKnowledge(): any {
@@ -70,20 +75,25 @@ export class AiService {
     }
   }
 
-  private makeMessagesHistory(history: ChatMessage[]): { role: string; content: string }[] {
-    return history.map(msg => ({
+  private makeMessagesHistory(
+    history: ChatMessage[],
+  ): { role: string; content: string }[] {
+    return history.map((msg) => ({
       role: msg.role === 'assistant' ? 'assistant' : 'user',
-      content: msg.content
+      content: msg.content,
     }));
   }
 
   private async getProductsCatalog(): Promise<ProductInfo[]> {
-    if (this.productsCache.length > 0 && Date.now() - this.lastCacheTime < this.CACHE_TTL_MS) {
+    if (
+      this.productsCache.length > 0 &&
+      Date.now() - this.lastCacheTime < this.CACHE_TTL_MS
+    ) {
       return this.productsCache;
     }
     try {
       const products = await this.productsService.findAll();
-      this.productsCache = products.map(p => ({
+      this.productsCache = products.map((p) => ({
         id: p.id,
         name: p.name,
         price: p.price,
@@ -93,7 +103,7 @@ export class AiService {
         sizes: p.sizes || [],
         colors: p.colors || [],
         discount: p.discount || 0,
-        embedding: p.embedding ? p.embedding.map(Number) : undefined
+        embedding: p.embedding ? p.embedding.map(Number) : undefined,
       }));
       this.lastCacheTime = Date.now();
       return this.productsCache;
@@ -104,23 +114,28 @@ export class AiService {
   }
 
   private normalizeImages(images: string[]): string[] {
-    return images.map(img => {
-      if (!img) return '';
-      if (img.startsWith('http://') || img.startsWith('https://')) {
-        return img;
-      }
-      const cleanPath = img.startsWith('/') ? img : `/${img}`;
-      return `${this.backendUrl}${cleanPath}`;
-    }).filter(Boolean);
+    return images
+      .map((img) => {
+        if (!img) return '';
+        if (img.startsWith('http://') || img.startsWith('https://')) {
+          return img;
+        }
+        const cleanPath = img.startsWith('/') ? img : `/${img}`;
+        return `${this.backendUrl}${cleanPath}`;
+      })
+      .filter(Boolean);
   }
 
   private buildSystemPrompt(products: ProductInfo[]): string {
-    const productList = products.slice(0, 15).map((p, i) => {
-      const sizes = p.sizes?.join(', ') || 'Todas';
-      const colors = p.colors?.join(', ') || 'Varios';
-      const image = p.images?.[0] || 'Sin imagen';
-      return `${i+1}. ${p.name} - $${p.price} - Tallas: ${sizes} - Colores: ${colors} - Img: ${image}`;
-    }).join('\n');
+    const productList = products
+      .slice(0, 15)
+      .map((p, i) => {
+        const sizes = p.sizes?.join(', ') || 'Todas';
+        const colors = p.colors?.join(', ') || 'Varios';
+        const image = p.images?.[0] || 'Sin imagen';
+        return `${i + 1}. ${p.name} - $${p.price} - Tallas: ${sizes} - Colores: ${colors} - Img: ${image}`;
+      })
+      .join('\n');
 
     const knowledge = this.loadStoreKnowledge();
     let knowledgeText = '';
@@ -169,7 +184,10 @@ EJEMPLO PRODUCTOS (SOLO JSON, nada más):
 PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muestres productos.`;
   }
 
-  private parseJsonResponse(text: string): { text: string; products: ProductInfo[] } {
+  private parseJsonResponse(text: string): {
+    text: string;
+    products: ProductInfo[];
+  } {
     try {
       let cleanText = text.trim();
 
@@ -185,20 +203,29 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
         const jsonStr = cleanText.substring(firstBrace, lastBrace + 1);
         const parsed = JSON.parse(jsonStr);
 
-        if (parsed && parsed.text !== undefined && Array.isArray(parsed.products)) {
+        if (
+          parsed &&
+          parsed.text !== undefined &&
+          Array.isArray(parsed.products)
+        ) {
           return {
-            text: String(parsed.text).replace(/\*\*/g, '').replace(/\*/g, '').trim(),
+            text: String(parsed.text)
+              .replace(/\*\*/g, '')
+              .replace(/\*/g, '')
+              .trim(),
             products: parsed.products.map((p: any) => ({
               id: p.id || '',
               name: p.name || '',
               price: Number(p.price) || 0,
               category: p.category || '',
               gender: p.gender || '',
-              images: this.normalizeImages(Array.isArray(p.images) ? p.images : []),
+              images: this.normalizeImages(
+                Array.isArray(p.images) ? p.images : [],
+              ),
               sizes: Array.isArray(p.sizes) ? p.sizes : [],
               colors: Array.isArray(p.colors) ? p.colors : [],
-              discount: Number(p.discount) || 0
-            }))
+              discount: Number(p.discount) || 0,
+            })),
           };
         }
       }
@@ -216,11 +243,28 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
     const history = this.chatHistories.get(sessionId) || [];
 
     // Detectar saludos simples
-    const greetingPatterns = ['hola', 'hi', 'hello', 'buenos días', 'buenos dias', 'buenas tardes', 'buenas noches', 'qué tal', 'que tal'];
-    const isGreeting = greetingPatterns.some(g => message.toLowerCase().trim() === g);
+    const greetingPatterns = [
+      'hola',
+      'hi',
+      'hello',
+      'buenos días',
+      'buenos dias',
+      'buenas tardes',
+      'buenas noches',
+      'qué tal',
+      'que tal',
+    ];
+    const isGreeting = greetingPatterns.some(
+      (g) => message.toLowerCase().trim() === g,
+    );
 
     if (isGreeting) {
-      const reply = { text: '¡Hola! Bienvenido a FashionStore. ¿Qué producto estás buscando hoy?', products: [], shouldEscalate: false, sessionId };
+      const reply = {
+        text: '¡Hola! Bienvenido a FashionStore. ¿Qué producto estás buscando hoy?',
+        products: [],
+        shouldEscalate: false,
+        sessionId,
+      };
       history.push({ role: 'user', content: message });
       history.push({ role: 'assistant', content: JSON.stringify(reply) });
       this.chatHistories.set(sessionId, history.slice(-12));
@@ -237,7 +281,7 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
       if (matchedProducts.length > 0) {
         const reply = {
           text: `Aquí tienes ${matchedProducts.length} productos que coinciden:`,
-          products: matchedProducts.slice(0, 8).map(p => ({
+          products: matchedProducts.slice(0, 8).map((p) => ({
             id: p.id,
             name: p.name,
             price: Number(p.price) || 0,
@@ -246,10 +290,10 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
             images: p.images || [],
             sizes: p.sizes || [],
             colors: p.colors || [],
-            discount: Number(p.discount) || 0
+            discount: Number(p.discount) || 0,
           })),
           shouldEscalate: false,
-          sessionId
+          sessionId,
         };
 
         history.push({ role: 'user', content: message });
@@ -265,23 +309,32 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
 
     if (imageBase64) {
       try {
-        const imageEmbedding = await this.embeddingService.getImageEmbedding(imageBase64);
-        const productsWithEmbeddings = products.filter(p => p.embedding && p.embedding.length > 0);
+        const imageEmbedding =
+          await this.embeddingService.getImageEmbedding(imageBase64);
+        const productsWithEmbeddings = products.filter(
+          (p) => p.embedding && p.embedding.length > 0,
+        );
 
         if (productsWithEmbeddings.length > 0) {
-          const candidateEmbeddings = productsWithEmbeddings.map(p => ({
+          const candidateEmbeddings = productsWithEmbeddings.map((p) => ({
             id: p.id,
-            embedding: p.embedding!
+            embedding: p.embedding!,
           }));
 
-          const similarities = batchCosineSimilarity(imageEmbedding, candidateEmbeddings);
+          const similarities = batchCosineSimilarity(
+            imageEmbedding,
+            candidateEmbeddings,
+          );
           const topSimilar = similarities.slice(0, 3);
 
           if (topSimilar.length > 0) {
-            const similarProducts = topSimilar.map(({ id }) => {
-              const product = products.find(p => p.id === id);
-              return product ? `${product.name} (${product.category})` : '';
-            }).filter(Boolean).join(', ');
+            const similarProducts = topSimilar
+              .map(({ id }) => {
+                const product = products.find((p) => p.id === id);
+                return product ? `${product.name} (${product.category})` : '';
+              })
+              .filter(Boolean)
+              .join(', ');
 
             userContent = `${message}\n\n[Imagen proporcionada. Productos similares: ${similarProducts}]`;
           }
@@ -318,7 +371,7 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
           .pipe(timeout(HF_TIMEOUT)),
       );
 
-      const responseData = response?.data as any;
+      const responseData = response?.data;
 
       if (!responseData?.choices?.length) {
         const reply = FALLBACK_RESPONSE;
@@ -368,7 +421,7 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
         const results = this.searchByTextFilter(textFilter, products);
         if (results.length > 0) {
           return {
-            results: results.slice(0, 8).map(p => {
+            results: results.slice(0, 8).map((p) => {
               const images = this.normalizeImages(p.images || []);
               return {
                 productId: p.id,
@@ -376,30 +429,36 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
                 price: p.price,
                 category: p.category,
                 image: images[0] || '',
-                score: 0.8
+                score: 0.8,
               };
             }),
-            message: `Encontré ${results.length} productos similares`
+            message: `Encontré ${results.length} productos similares`,
           };
         }
       }
 
       // Intentar con embeddings
-      const productsWithEmbeddings = products.filter(p => p.embedding && p.embedding.length > 0);
+      const productsWithEmbeddings = products.filter(
+        (p) => p.embedding && p.embedding.length > 0,
+      );
 
       if (productsWithEmbeddings.length > 0) {
         try {
-          const imageEmbedding = await this.embeddingService.getImageEmbedding(imageBase64);
-          const candidateEmbeddings = productsWithEmbeddings.map(p => ({
+          const imageEmbedding =
+            await this.embeddingService.getImageEmbedding(imageBase64);
+          const candidateEmbeddings = productsWithEmbeddings.map((p) => ({
             id: p.id,
-            embedding: p.embedding!
+            embedding: p.embedding!,
           }));
 
-          const similarities = batchCosineSimilarity(imageEmbedding, candidateEmbeddings);
+          const similarities = batchCosineSimilarity(
+            imageEmbedding,
+            candidateEmbeddings,
+          );
 
           if (similarities.length > 0) {
             const results = similarities.slice(0, 8).map(({ id, score }) => {
-              const product = products.find(p => p.id === id);
+              const product = products.find((p) => p.id === id);
               const images = this.normalizeImages(product?.images || []);
               return {
                 productId: id,
@@ -426,7 +485,10 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
         message: 'No encontré productos similares. Intenta con otra imagen.',
       };
     } catch (error) {
-      this.logger.error('Visual search error:', error.response?.data || error.message);
+      this.logger.error(
+        'Visual search error:',
+        error.response?.data || error.message,
+      );
       return {
         results: [],
         message: 'Error procesando la imagen. Intenta de nuevo.',
@@ -438,7 +500,7 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
     results: any[];
     message?: string;
   } {
-    const featured = products.slice(0, 8).map(p => ({
+    const featured = products.slice(0, 8).map((p) => ({
       productId: p.id,
       name: p.name,
       price: p.price,
@@ -463,29 +525,38 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
       }
 
       const viewed = products.filter(
-        p => viewedProductIds.includes(p.id) && p.embedding && p.embedding.length > 0,
+        (p) =>
+          viewedProductIds.includes(p.id) &&
+          p.embedding &&
+          p.embedding.length > 0,
       );
       if (viewed.length === 0) {
         return { recommendations: [] };
       }
 
-      const viewedEmbeddings = viewed.map(p => p.embedding!);
+      const viewedEmbeddings = viewed.map((p) => p.embedding!);
       const avgEmbedding = this.averageEmbeddings(viewedEmbeddings);
 
       const candidates = products.filter(
-        p => !viewedProductIds.includes(p.id) && p.embedding && p.embedding.length > 0,
+        (p) =>
+          !viewedProductIds.includes(p.id) &&
+          p.embedding &&
+          p.embedding.length > 0,
       );
 
       if (candidates.length === 0) {
         return { recommendations: [] };
       }
 
-      const candidateEmbeddings = candidates.map(p => ({
+      const candidateEmbeddings = candidates.map((p) => ({
         id: p.id,
         embedding: p.embedding!,
       }));
 
-      const similarities = batchCosineSimilarity(avgEmbedding, candidateEmbeddings);
+      const similarities = batchCosineSimilarity(
+        avgEmbedding,
+        candidateEmbeddings,
+      );
 
       const recommendations = similarities.slice(0, 8).map(({ id, score }) => ({
         productId: id,
@@ -502,15 +573,18 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
     if (embeddings.length === 0) return [];
     const dim = embeddings[0].length;
     const avg = new Array(dim).fill(0);
-    embeddings.forEach(emb => {
+    embeddings.forEach((emb) => {
       for (let i = 0; i < dim; i++) {
         avg[i] += emb[i];
       }
     });
-    return avg.map(v => v / embeddings.length);
+    return avg.map((v) => v / embeddings.length);
   }
 
-  private searchByTextFilter(textFilter: string, products: ProductInfo[]): ProductInfo[] {
+  private searchByTextFilter(
+    textFilter: string,
+    products: ProductInfo[],
+  ): ProductInfo[] {
     if (!textFilter) return [];
 
     const msg = textFilter.toLowerCase();
@@ -518,7 +592,7 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
     const productType = this.extractProductType(msg);
     const color = this.extractColor(msg);
 
-    return products.filter(p => {
+    return products.filter((p) => {
       const nameAndCategory = `${p.name} ${p.category}`.toLowerCase();
       const colors = p.colors || [];
 
@@ -527,7 +601,9 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
       }
 
       if (color) {
-        const hasColor = colors.some(c => this.isSimilarColor(c.toLowerCase(), color));
+        const hasColor = colors.some((c) =>
+          this.isSimilarColor(c.toLowerCase(), color),
+        );
         if (!hasColor) return false;
       }
 
@@ -537,16 +613,16 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
 
   private extractProductType(message: string): string | null {
     const typeMap: { [key: string]: string[] } = {
-      'camiseta': ['camiseta', 'camisa', 'polo', 'blusa'],
-      'pantalon': ['pantalon', 'jeans', 'pantalón', 'pants'],
-      'zapato': ['zapato', 'zapatilla', 'tenis', 'botin'],
-      'vestido': ['vestido', 'dress'],
-      'chaqueta': ['chaqueta', 'chamarra', 'blazer', 'saco'],
-      'accesorio': ['gorra', 'bolso', 'accesorio'],
+      camiseta: ['camiseta', 'camisa', 'polo', 'blusa'],
+      pantalon: ['pantalon', 'jeans', 'pantalón', 'pants'],
+      zapato: ['zapato', 'zapatilla', 'tenis', 'botin'],
+      vestido: ['vestido', 'dress'],
+      chaqueta: ['chaqueta', 'chamarra', 'blazer', 'saco'],
+      accesorio: ['gorra', 'bolso', 'accesorio'],
     };
 
     for (const [type, keywords] of Object.entries(typeMap)) {
-      if (keywords.some(kw => message.includes(kw))) {
+      if (keywords.some((kw) => message.includes(kw))) {
         return type;
       }
     }
@@ -555,20 +631,20 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
 
   private extractColor(message: string): string | null {
     const colorMap: { [key: string]: string[] } = {
-      'rojo': ['rojo', 'roja', 'rojos', 'rojas'],
-      'azul': ['azul', 'azules'],
-      'verde': ['verde', 'verdes'],
-      'amarillo': ['amarillo', 'amarilla', 'amarillos', 'amarillas'],
-      'negro': ['negro', 'negra', 'negros', 'negras'],
-      'blanco': ['blanco', 'blanca', 'blancos', 'blancas'],
-      'rosa': ['rosa', 'rosas'],
-      'morado': ['morado', 'morada', 'morados', 'moradas'],
-      'naranja': ['naranja', 'naranjas'],
-      'marron': ['marron', 'marrón', 'cafe', 'café'],
+      rojo: ['rojo', 'roja', 'rojos', 'rojas'],
+      azul: ['azul', 'azules'],
+      verde: ['verde', 'verdes'],
+      amarillo: ['amarillo', 'amarilla', 'amarillos', 'amarillas'],
+      negro: ['negro', 'negra', 'negros', 'negras'],
+      blanco: ['blanco', 'blanca', 'blancos', 'blancas'],
+      rosa: ['rosa', 'rosas'],
+      morado: ['morado', 'morada', 'morados', 'moradas'],
+      naranja: ['naranja', 'naranjas'],
+      marron: ['marron', 'marrón', 'cafe', 'café'],
     };
 
     for (const [color, variants] of Object.entries(colorMap)) {
-      if (variants.some(v => message.includes(v))) {
+      if (variants.some((v) => message.includes(v))) {
         return color;
       }
     }
@@ -577,14 +653,14 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
 
   private isSimilarColor(productColor: string, detectedColor: string): boolean {
     const colorMap: { [key: string]: string[] } = {
-      'blanco': ['blanco', 'beige', 'crema', 'nude'],
-      'negro': ['negro', 'oscuro'],
-      'rojo': ['rojo', 'burdeo', 'vino'],
-      'verde': ['verde', 'oliva'],
-      'azul': ['azul', 'marino', 'celeste'],
-      'amarillo': ['amarillo', 'dorado'],
-      'naranja': ['naranja', 'terracota'],
-      'marron': ['marron', 'cafe', 'camel', 'tan'],
+      blanco: ['blanco', 'beige', 'crema', 'nude'],
+      negro: ['negro', 'oscuro'],
+      rojo: ['rojo', 'burdeo', 'vino'],
+      verde: ['verde', 'oliva'],
+      azul: ['azul', 'marino', 'celeste'],
+      amarillo: ['amarillo', 'dorado'],
+      naranja: ['naranja', 'terracota'],
+      marron: ['marron', 'cafe', 'camel', 'tan'],
     };
 
     for (const [mainColor, variants] of Object.entries(colorMap)) {
@@ -601,14 +677,34 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
 
   private detectProductQuery(message: string): string | null {
     const productKeywords = [
-      'camiseta', 'camisa', 'polo', 'blusa',
-      'pantalon', 'jeans', 'pantalón', 'pants',
-      'zapato', 'zapatilla', 'tenis', 'botin',
-      'vestido', 'dress',
-      'chaqueta', 'chamarra', 'blazer', 'saco',
-      'gorra', 'bolso', 'accesorio',
-      'muestra', 'busco', 'necesito', 'quiero',
-      'ver', 'productos', 'ropa'
+      'camiseta',
+      'camisa',
+      'polo',
+      'blusa',
+      'pantalon',
+      'jeans',
+      'pantalón',
+      'pants',
+      'zapato',
+      'zapatilla',
+      'tenis',
+      'botin',
+      'vestido',
+      'dress',
+      'chaqueta',
+      'chamarra',
+      'blazer',
+      'saco',
+      'gorra',
+      'bolso',
+      'accesorio',
+      'muestra',
+      'busco',
+      'necesito',
+      'quiero',
+      'ver',
+      'productos',
+      'ropa',
     ];
 
     for (const keyword of productKeywords) {
@@ -620,21 +716,28 @@ PROHIBIDO: **, ##, markdown, comillas triples, texto fuera del JSON cuando muest
     return null;
   }
 
-  private searchProducts(query: string, products: ProductInfo[]): ProductInfo[] {
-    const words = query.toLowerCase().split(' ').filter(w => w.length > 2);
+  private searchProducts(
+    query: string,
+    products: ProductInfo[],
+  ): ProductInfo[] {
+    const words = query
+      .toLowerCase()
+      .split(' ')
+      .filter((w) => w.length > 2);
 
-    return products.filter(p => {
+    return products.filter((p) => {
       const nameAndCategory = `${p.name} ${p.category}`.toLowerCase();
       const colors = (p.colors || []).join(' ').toLowerCase();
       const sizes = (p.sizes || []).join(' ').toLowerCase();
 
       // Buscar si alguna palabra clave coincide
-      return words.some(word =>
-        nameAndCategory.includes(word) ||
-        colors.includes(word) ||
-        sizes.includes(word) ||
-        p.category.toLowerCase().includes(word) ||
-        p.name.toLowerCase().includes(word)
+      return words.some(
+        (word) =>
+          nameAndCategory.includes(word) ||
+          colors.includes(word) ||
+          sizes.includes(word) ||
+          p.category.toLowerCase().includes(word) ||
+          p.name.toLowerCase().includes(word),
       );
     });
   }

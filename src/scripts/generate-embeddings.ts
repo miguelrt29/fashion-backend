@@ -7,12 +7,19 @@ config();
 
 const HF_API_KEY = process.env['HUGGING_FACE_API_KEY'] || '';
 const VI_MODEL = 'google/vit-base-patch16-224';
-const HF_FEATURE_EXTRACTION_URL = 'https://router.huggingface.co/feature-extraction';
+const HF_FEATURE_EXTRACTION_URL =
+  'https://router.huggingface.co/feature-extraction';
 
 async function getImageEmbedding(imageUrl: string): Promise<number[]> {
   try {
-    const imageResponse = await axios.get(imageUrl, { responseType: 'arraybuffer', timeout: 10000 });
-    const base64Image = Buffer.Buffer.from(imageResponse.data, 'binary').toString('base64');
+    const imageResponse = await axios.get(imageUrl, {
+      responseType: 'arraybuffer',
+      timeout: 10000,
+    });
+    const base64Image = Buffer.Buffer.from(
+      imageResponse.data,
+      'binary',
+    ).toString('base64');
 
     const response = await axios.post(
       `${HF_FEATURE_EXTRACTION_URL}/${VI_MODEL}`,
@@ -37,7 +44,10 @@ async function getImageEmbedding(imageUrl: string): Promise<number[]> {
 
     throw new Error('Invalid embedding response');
   } catch (error: any) {
-    console.error('Error getting embedding for image:', error.response?.data || error.message);
+    console.error(
+      'Error getting embedding for image:',
+      error.response?.data || error.message,
+    );
     return [];
   }
 }
@@ -78,7 +88,9 @@ async function generateEmbeddings() {
         const firstImage = images[0];
 
         if (!firstImage || !firstImage.startsWith('http')) {
-          console.log(`Skipping product ${product.id} - image is not a URL: ${firstImage}`);
+          console.log(
+            `Skipping product ${product.id} - image is not a URL: ${firstImage}`,
+          );
           continue;
         }
 
@@ -88,25 +100,28 @@ async function generateEmbeddings() {
         if (embedding.length > 0) {
           const embeddingStr = embedding.join(',');
 
-          await dataSource.query(`
+          await dataSource.query(
+            `
             UPDATE products
             SET embedding = $1
             WHERE id = $2
-          `, [embeddingStr, product.id]);
+          `,
+            [embeddingStr, product.id],
+          );
 
           updatedCount++;
           console.log(`Updated embedding for product: ${product.name}`);
         }
 
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
+        await new Promise((resolve) => setTimeout(resolve, 1000));
       } catch (error: any) {
         console.error(`Error processing product ${product.id}:`, error.message);
       }
     }
 
-    console.log(`\nCompleted! Updated ${updatedCount} products with embeddings`);
-
+    console.log(
+      `\nCompleted! Updated ${updatedCount} products with embeddings`,
+    );
   } catch (error) {
     console.error('Error:', error);
   } finally {
