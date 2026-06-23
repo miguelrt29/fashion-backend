@@ -55,8 +55,8 @@ import { Coupon } from './coupons/coupon.entity';
             url: databaseUrl,
             entities,
             ssl: { rejectUnauthorized: false },
-            synchronize: config.get('NODE_ENV') !== 'production',
-            logging: config.get('NODE_ENV') === 'development',
+            synchronize: config.get('NODE_ENV', 'production') === 'development',
+            logging: config.get('NODE_ENV', 'production') === 'development',
           };
         }
 
@@ -68,8 +68,8 @@ import { Coupon } from './coupons/coupon.entity';
           password: config.get('DB_PASSWORD'),
           database: config.get('DB_NAME'),
           entities,
-          synchronize: config.get('NODE_ENV') !== 'production',
-          logging: config.get('NODE_ENV') === 'development',
+          synchronize: config.get('NODE_ENV', 'production') === 'development',
+          logging: config.get('NODE_ENV', 'production') === 'development',
         };
       },
       inject: [ConfigService],
