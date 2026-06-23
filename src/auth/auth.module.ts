@@ -15,10 +15,16 @@ import { MailModule } from '../mail/mail.module';
     PassportModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: (config: ConfigService) => ({
-        secret: config.get('JWT_SECRET'),
-        signOptions: { expiresIn: config.get('JWT_EXPIRES_IN') || '15m' },
-      }),
+      useFactory: (config: ConfigService) => {
+        const secret = config.get<string>('JWT_SECRET');
+        if (!secret) {
+          console.warn('⚠️  JWT_SECRET no configurado — usando fallback para desarrollo');
+        }
+        return {
+          secret: secret || 'dev-jwt-secret-fallback-2024',
+          signOptions: { expiresIn: config.get('JWT_EXPIRES_IN') || '15m' },
+        };
+      },
       inject: [ConfigService],
     }),
     MailModule,

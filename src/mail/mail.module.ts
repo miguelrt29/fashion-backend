@@ -7,25 +7,27 @@ import { MailService } from './mail.service';
   imports: [
     MailerModule.forRootAsync({
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        transport: {
+      useFactory: (configService: ConfigService) => {
+        const user = configService.get('MAIL_USER');
+        const pass = configService.get('MAIL_PASS');
+        const transport: any = {
           host: configService.get('MAIL_HOST') || 'smtp.gmail.com',
           port: parseInt(configService.get('MAIL_PORT') || '587'),
           secure: false,
-          tls: {
-            rejectUnauthorized: false,
+          tls: { rejectUnauthorized: false },
+        };
+        if (user && pass) {
+          transport.auth = { user, pass };
+        } else {
+          console.warn('⚠️  MAIL_USER/MAIL_PASS no configurados — emails no se enviarán');
+        }
+        return {
+          transport,
+          defaults: {
+            from: configService.get('MAIL_FROM') || 'FashionStore <noreply@fashionstore.com>',
           },
-          auth: {
-            user: configService.get('MAIL_USER'),
-            pass: configService.get('MAIL_PASS'),
-          },
-        },
-        defaults: {
-          from:
-            configService.get('MAIL_FROM') ||
-            'FashionStore <noreply@fashionstore.com>',
-        },
-      }),
+        };
+      },
     }),
   ],
   providers: [MailService],
