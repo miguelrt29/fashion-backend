@@ -18,9 +18,19 @@ async function bootstrap() {
   // Performance: Compresión de respuestas gzip
   app.use(compression());
 
-  // Seguridad: CORS - solo permite llamadas desde el frontend
+  // Seguridad: CORS - permite frontend en Vercel y localhost
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:4200',
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      const allowed = [
+        'http://localhost:4200',
+        process.env.FRONTEND_URL,
+      ].filter(Boolean);
+      if (!origin || allowed.includes(origin) || origin.endsWith('.vercel.app')) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     credentials: true,
   });
