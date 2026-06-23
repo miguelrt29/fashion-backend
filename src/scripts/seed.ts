@@ -2,16 +2,28 @@ import 'reflect-metadata';
 import { DataSource } from 'typeorm';
 import { Product } from '../products/product.entity';
 
-const AppDataSource = new DataSource({
-  type: 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  username: process.env.DB_USERNAME || 'postgres',
-  password: process.env.DB_PASSWORD || 'Fashion2024*',
-  database: process.env.DB_NAME || 'fashion_store',
-  entities: [Product],
-  synchronize: true,
-});
+const databaseUrl = process.env.DATABASE_URL;
+
+const AppDataSource = new DataSource(
+  databaseUrl
+    ? {
+        type: 'postgres',
+        url: databaseUrl,
+        entities: [Product],
+        ssl: { rejectUnauthorized: false },
+        synchronize: true,
+      }
+    : {
+        type: 'postgres',
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5432'),
+        username: process.env.DB_USERNAME || 'postgres',
+        password: process.env.DB_PASSWORD || 'Fashion2024*',
+        database: process.env.DB_NAME || 'fashion_store',
+        entities: [Product],
+        synchronize: true,
+      },
+);
 
 const products = [
   // MUJER - VESTIDOS
