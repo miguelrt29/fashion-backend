@@ -21,7 +21,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "seed": "ts-node -r tsconfig-paths/register src/scripts/seed.ts",
     "test:email": "ts-node -r tsconfig-paths/register src/scripts/test-email.ts",
-    "generate:embeddings": "ts-node -r tsconfig-paths/register src/scripts/generate-embeddings.ts"
+    "generate:embeddings": "ts-node -r tsconfig-paths/register src/scripts/generate-embeddings.ts",
+    "sync:db": "ts-node -r tsconfig-paths/register src/scripts/sync-db.ts"
   },
   "dependencies": {
     "@nestjs-modules/mailer": "^2.3.4",
